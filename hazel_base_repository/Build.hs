@@ -4,13 +4,13 @@ module Build
     ) where
 
 import Control.Monad.Trans.Writer.Strict (Writer(..), tell, runWriter)
-import Data.List (isPrefixOf)
+import Data.List ((\\), isPrefixOf)
 import Data.Maybe (fromMaybe, maybeToList)
 import Distribution.Compiler (CompilerFlavor(GHC))
 import Distribution.Simple.Build.Macros (generatePackageVersionMacros)
 import Distribution.Text (display)
 import Language.Haskell.Extension (Language(Haskell98))
-import System.FilePath ((<.>), (</>), normalise)
+import System.FilePath ((<.>), (</>), normalise, takeExtension)
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -78,9 +78,7 @@ buildRules packageFiles packages prebuilt pkg =
 locateModule :: FilePath -> PackageFiles -> [FilePath] -> ModuleName.ModuleName
     -> Writer [Statement] FilePath
 locateModule dest fs srcDirs m
-    | f:_ <- filter (`Set.member` fs)
-                      $ map (\d -> normalise $ d </> ModuleName.toFilePath m <.> "hs")
-                          srcDirs
+    | f:_ <- filter (`Set.member` fs) alternatives
           = do
               let out = dest </> ModuleName.toFilePath m <.> "hs"
               tell [Rule "hazel_symlink"
@@ -95,6 +93,10 @@ locateModule dest fs srcDirs m
                             ++ ": " ++ show fs
   where
     ruleName = "gen-" ++ dest ++ "-" ++ display m
+    alternatives = [ normalise $ d </> ModuleName.toFilePath m <.> ext
+                   | d <- srcDirs
+                   , ext <- ["hs", "hsc"]
+                   ]
 
 locateModules :: FilePath -> PackageFiles -> P.BuildInfo -> [ModuleName.ModuleName]
     -> ([FilePath], [Statement])
@@ -133,15 +135,16 @@ renderLibrary packageFiles prebuilt pkg lib
     , Rule "cc_library"
         [ "name" =: "cbits-lib"
         , "srcs" =: P.cSources bi
-        , "hdrs" =: ExprOp (expr . Set.toList
-                      . Set.fromList
-                      $ filter (`Set.member` packageFiles)
-                      $ [ d </> f
-                        | d <- prepDirs $ P.includeDirs bi
-                        , f <- P.includes bi ++ P.installIncludes bi
-                        ])
+        , "hdrs" =: let normalIncludes
+                          = nubOrd
+                              . filter (`Set.member` packageFiles)
+                              $ [ d </> f
+                                | d <- prepDirs $ P.includeDirs bi
+                                , f <- P.includes bi ++ P.installIncludes bi
+                                ]
+                    in ExprOp (expr $ normalIncludes)
                       "+"
-                     (glob . filter (headerPre `isPrefixOf`) $ P.extraSrcFiles pkg)
+                     (glob extraSrcIncludes)
         -- TODO: janky.  Why is this needed again, when toktok doesn't want
         -- it?
         , "strip_include_prefix" =: headerPre
@@ -152,10 +155,7 @@ renderLibrary packageFiles prebuilt pkg lib
         [ "name" =: "cbits-extra"
         , "hdrs" =: ExprOp (expr [":cabal_macros"])
                     "+"
-                      (glob
-                      . filter (not . isPrefixOf headerPre)
-                      . Set.toList . Set.fromList
-                      $ P.extraSrcFiles pkg)
+                      (glob (P.extraSrcFiles pkg \\ extraSrcIncludes))
         ]
     ] ++ srcRules
   where
@@ -172,6 +172,18 @@ renderLibrary packageFiles prebuilt pkg lib
     (srcs, srcRules) = locateModules srcsDir packageFiles bi
                           $ filter (/= pathsMod)
                           $ P.exposedModules lib ++ P.otherModules bi
+    normalIncludes
+          = nubOrd
+              . filter (`Set.member` packageFiles)
+              $ [ d </> f
+                | d <- prepDirs $ P.includeDirs bi
+                , f <- P.includes bi ++ P.installIncludes bi
+                ]
+    extraSrcIncludes = filter (headerPre `isPrefixOf`)
+                          . filter (\f -> takeExtension f == ".h")
+                          . (\\ normalIncludes)
+                          $ P.extraSrcFiles pkg
+
 
 filterOptions :: [String] -> [String]
 filterOptions = filter (`notElem` badOptions)
@@ -190,3 +202,6 @@ pathsModule n = ModuleName.fromString $ "Paths_" ++ map fixHyphen (display n)
   where
     fixHyphen '-' = '_'
     fixHyphen c = c
+
+nubOrd :: Ord a => [a] -> [a]
+nubOrd = Set.toList . Set.fromList
