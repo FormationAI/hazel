@@ -74,7 +74,7 @@ locateModule :: FilePath -> PackageFiles -> [FilePath] -> ModuleName.ModuleName
 locateModule dest fs srcDirs m
     | f:_ <- filter (`Set.member` fs) alternatives
           = do
-              let out = dest </> ModuleName.toFilePath m <.> "hs"
+              let out = dest </> ModuleName.toFilePath m <.> takeExtension f
               tell [Rule "hazel_symlink"
                     [ "name" =: ruleName
                     , "src" =: f
@@ -120,6 +120,7 @@ renderLibrary packageFiles prebuilt pkg lib
                     ++ filterOptions (concat [opts | (GHC,opts) <- P.options bi])
                     ++ map ("-optP" ++) (P.cppOptions bi)
                     ++ ["-optP-include", "-optPcabal-macros.h"]
+                    ++ ["-optc" ++ opt | opt <- P.ccOptions bi]
                     ++ ["-w"] -- We don't care about warnings
                               -- (TODO: configure this)
         ]
