@@ -43,12 +43,6 @@ buildRules packageFiles packages prebuilt pkg =
         [ "name" =: display (pathsModule (P.packageName pkg))
         , "version_number" =: Version.versionNumbers (P.packageVersion pkg)
         ]
-    , Rule "haskell_library"
-        [ "name" =: "paths"
-        , "srcs" =: [":" ++ display (pathsModule $ P.packageName pkg)]
-        , "prebuilt_dependencies" =: ["base", "Cabal"]
-        ]
-    -- TODO: janky
     , Rule "hazel_writefile"
         [ "name" =: "cabal_macros"
         , "output" =: "cabal-macros.h"
@@ -101,14 +95,8 @@ locateModule dest fs srcDirs m
 locateModules :: FilePath -> PackageFiles -> P.BuildInfo -> [ModuleName.ModuleName]
     -> ([FilePath], [Statement])
 locateModules dest files bi modules =
-    runWriter . mapM (locateModule dest files (prepDirs $ P.hsSourceDirs bi))
+    runWriter . mapM (locateModule dest files (prepDirs (P.hsSourceDirs bi) ++ ["hazel.paths"]))
               $ modules
-
-{-
-collectHeaders :: FilePath -> PackageFiles -> P.PackageDescription -> P.BuildInfo
-    -> Writer [Statement] FilePath
-collectHeaders dest files
--}
 
 renderLibrary :: PackageFiles -> PackageList -> P.PackageDescription -> P.Library -> [Statement]
 renderLibrary packageFiles prebuilt pkg lib
@@ -121,11 +109,8 @@ renderLibrary packageFiles prebuilt pkg lib
     [ Rule "haskell_library"
         [ "name" =: "lib-" ++ display (P.packageName pkg)
         , "srcs" =: srcs
-        , "hidden_modules" =: map display $ filter (/= pathsMod) $ P.otherModules bi
+        , "hidden_modules" =: map display $ P.otherModules bi
         , "deps" =: ":cbits-lib" : haskellDeps
-                    ++ if pathsMod `elem` (P.exposedModules lib ++ P.otherModules bi)
-                          then [":paths"]
-                          else []
         , "prebuilt_dependencies" =: map display . filter (`Map.member` prebuilt)
                                       $ allDeps
         , "src_strip_prefix" =: srcsDir
@@ -165,8 +150,10 @@ renderLibrary packageFiles prebuilt pkg lib
                       . filter (`Map.notMember` prebuilt)
                       $ allDeps
     srcsDir = ".hazel-lib"
-    (srcs, srcRules) = locateModules srcsDir packageFiles bi
-                          $ filter (/= pathsMod)
+    (srcs, srcRules) = locateModules srcsDir
+                              (Set.insert ("hazel.paths" </> ModuleName.toFilePath pathsMod
+                                              <.> "hs")
+                                  packageFiles) bi
                           $ P.exposedModules lib ++ P.otherModules bi
     normalIncludes
           = nubOrd

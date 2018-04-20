@@ -21,7 +21,7 @@ hazel_paths_module = rule(
             allow_files=True,
             single_file=True),
     },
-    outputs={"module": "%{name}.hs"})
+    outputs={"module": "hazel.paths/%{name}.hs"})
 
 def _hazel_writefile_impl(ctx):
   ctx.actions.write(ctx.outputs.out, ctx.attr.contents, is_executable=False)
