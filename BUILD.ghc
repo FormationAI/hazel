@@ -1,6 +1,9 @@
 # Template for a GHC bindist that is compatible with Hazel.
 package(default_visibility = [ "//visibility:public" ])
 
+load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_toolchain")
+
+
 filegroup(
     name = "bin",
     srcs = glob(["bin/*"]),
@@ -28,4 +31,10 @@ cc_library(
   srcs = glob(["lib/ghc-*/rts/libHSrts_thr-ghc*." + ext for ext in ["so", "dylib"]]),
   hdrs = glob(["lib/ghc-*/include/**/*.h"]),
   strip_include_prefix = glob(["lib/ghc-*/include"], exclude_directories=0)[0],
+)
+
+haskell_toolchain(
+    name = "ghc",
+    version = "8.2.2",
+    tools = ":bin",
 )

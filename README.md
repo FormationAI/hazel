@@ -63,21 +63,7 @@ nixpkgs_package(
 load("@io_tweag_rules_haskell//haskell:repositories.bzl", "haskell_repositories")
 haskell_repositories()
 
-register_toolchains("//:ghc")
-```
-
-Additionally, in your top-level `BUILD` file, add:
-
-```
-load("@io_tweag_rules_haskell//haskell:haskell.bzl",
-  "haskell_toolchain",
-)
-
-haskell_toolchain(
-    name = "ghc",
-    version = "8.2.2",
-    tools = "@ghc//:bin",
-)
+register_toolchains("@ghc//:ghc")
 ```
 
 ### Using Hazel in Build Rules
