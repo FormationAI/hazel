@@ -68,9 +68,9 @@ buildRules packageFiles packages prebuilt pkg =
           map P.depPkgName
           . concatMap P.targetBuildDepends
             $ map P.libBuildInfo (maybeToList $ P.library pkg)
-            ++ map P.buildInfo (P.executables pkg) 
-            ++ map P.testBuildInfo (P.testSuites pkg) 
-            ++ map P.benchmarkBuildInfo (P.benchmarks pkg) 
+            ++ map P.buildInfo (P.executables pkg)
+            ++ map P.testBuildInfo (P.testSuites pkg)
+            ++ map P.benchmarkBuildInfo (P.benchmarks pkg)
     get m k = case Map.lookup k m of
                 Nothing -> error $ "Missing key " ++ show k
                 Just x -> x
@@ -104,6 +104,12 @@ locateModules dest files bi modules =
     runWriter . mapM (locateModule dest files (prepDirs $ P.hsSourceDirs bi))
               $ modules
 
+{-
+collectHeaders :: FilePath -> PackageFiles -> P.PackageDescription -> P.BuildInfo
+    -> Writer [Statement] FilePath
+collectHeaders dest files
+-}
+
 renderLibrary :: PackageFiles -> PackageList -> P.PackageDescription -> P.Library -> [Statement]
 renderLibrary packageFiles prebuilt pkg lib
     | null (P.exposedModules lib)
@@ -116,7 +122,7 @@ renderLibrary packageFiles prebuilt pkg lib
         [ "name" =: "lib-" ++ display (P.packageName pkg)
         , "srcs" =: srcs
         , "hidden_modules" =: map display $ filter (/= pathsMod) $ P.otherModules bi
-        , "deps" =: ":cbits-lib" : ":cbits-extra" : haskellDeps
+        , "deps" =: ":cbits-lib" : haskellDeps
                     ++ if pathsMod `elem` (P.exposedModules lib ++ P.otherModules bi)
                           then [":paths"]
                           else []
@@ -135,27 +141,19 @@ renderLibrary packageFiles prebuilt pkg lib
     , Rule "cc_library"
         [ "name" =: "cbits-lib"
         , "srcs" =: P.cSources bi
-        , "hdrs" =: let normalIncludes
-                          = nubOrd
-                              . filter (`Set.member` packageFiles)
-                              $ [ d </> f
-                                | d <- prepDirs $ P.includeDirs bi
-                                , f <- P.includes bi ++ P.installIncludes bi
-                                ]
-                    in ExprOp (expr $ normalIncludes)
-                      "+"
-                     (glob extraSrcIncludes)
-        -- TODO: janky.  Why is this needed again, when toktok doesn't want
-        -- it?
-        , "strip_include_prefix" =: headerPre
+        , "textual_hdrs" =: let normalIncludes
+                                  = nubOrd
+                                      . filter (`Set.member` packageFiles)
+                                      $ [ d </> f
+                                        | d <- prepDirs $ P.includeDirs bi
+                                        , f <- P.includes bi ++ P.installIncludes bi
+                                        ]
+                            in ExprOp (expr $ normalIncludes ++ [":cabal_macros"])
+                              "+"
+                             (glob $ nubOrd $ P.extraSrcFiles pkg \\ normalIncludes)
+        , "includes" =: prepDirs $ P.includeDirs bi
         -- TODO: don't hard-code in "@ghc"
         , "deps" =: ["@ghc//:threaded-rts"]
-        ]
-    , Rule "cc_library"
-        [ "name" =: "cbits-extra"
-        , "hdrs" =: ExprOp (expr [":cabal_macros"])
-                    "+"
-                      (glob (P.extraSrcFiles pkg \\ extraSrcIncludes))
         ]
     ] ++ srcRules
   where
@@ -166,8 +164,6 @@ renderLibrary packageFiles prebuilt pkg lib
                       . map display
                       . filter (`Map.notMember` prebuilt)
                       $ allDeps
-    -- TODO: this will fail if there's more than one...
-    headerPre = head $ prepDirs $ P.includeDirs bi
     srcsDir = ".hazel-lib"
     (srcs, srcRules) = locateModules srcsDir packageFiles bi
                           $ filter (/= pathsMod)
@@ -179,10 +175,6 @@ renderLibrary packageFiles prebuilt pkg lib
                 | d <- prepDirs $ P.includeDirs bi
                 , f <- P.includes bi ++ P.installIncludes bi
                 ]
-    extraSrcIncludes = filter (headerPre `isPrefixOf`)
-                          . filter (\f -> takeExtension f == ".h")
-                          . (\\ normalIncludes)
-                          $ P.extraSrcFiles pkg
 
 
 filterOptions :: [String] -> [String]
