@@ -34,6 +34,24 @@ hazel_writefile = rule(
     },
     outputs={"out": "%{output}"})
 
+def _hazel_symlink_impl(ctx):
+  ctx.actions.run(
+      outputs=[ctx.outputs.out],
+      inputs=[ctx.file.src],
+      executable="ln",
+      arguments=["-s", 
+                  "/".join([".."] * len(ctx.outputs.out.dirname.split("/")))
+                    + "/" + ctx.file.src.path,
+                  ctx.outputs.out.path])
+
+hazel_symlink = rule(
+    implementation = _hazel_symlink_impl,
+    attrs = {
+        "src": attr.label(mandatory=True, allow_files=True, single_file=True),
+        "out": attr.string(mandatory=True),
+    },
+    outputs={"out": "%{out}"})
+
 def _cabal_haskell_package_impl(ctx):
   pkg = "{}-{}".format(ctx.attr.package_name, ctx.attr.package_version)
   url = "https://hackage.haskell.org/package/{}.tar.gz".format(pkg)

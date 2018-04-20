@@ -38,11 +38,11 @@ main = do
                     . lines
                     <$> readFile prebuiltDepsFile
     gdesc <- readGenericPackageDescription normal cabalFile
-    files <- getDirectoryContentsRecursive $ takeDirectory cabalFile
     let ghcVersion = case simpleParse ghcVersionStr of
                       Nothing -> error $ "Error parsing ghc version: " ++ show ghcVersionStr
                       Just v -> v
     let desc = flattenToDefaultFlags ghcVersion gdesc
+    files <- getDirectoryContentsRecursive $ takeDirectory cabalFile
     writeFile outFile $ show $ renderStatements $
         buildRules files packages prebuiltDeps desc
 

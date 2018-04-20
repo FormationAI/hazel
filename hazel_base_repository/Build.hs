@@ -3,20 +3,24 @@ module Build
     , buildRules
     ) where
 
+import Control.Monad.Trans.Writer.Strict (Writer(..), tell, runWriter)
 import Data.List (isPrefixOf)
 import Data.Maybe (fromMaybe, maybeToList)
 import Distribution.Compiler (CompilerFlavor(GHC))
 import Distribution.Simple.Build.Macros (generatePackageVersionMacros)
 import Distribution.Text (display)
 import Language.Haskell.Extension (Language(Haskell98))
-import System.FilePath ((<.>), (</>))
+import System.FilePath ((<.>), (</>), normalise)
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Distribution.ModuleName as ModuleName
+import qualified Distribution.Types.ComponentName as P
 import qualified Distribution.Package as P
 import qualified Distribution.PackageDescription as P
 import qualified Distribution.Version as Version
+import qualified System.Directory as Directory
+import qualified System.Posix.Files as Posix
 
 import Skylark
 
@@ -32,7 +36,7 @@ buildRules packageFiles packages prebuilt pkg =
     [ Load "@io_tweag_rules_haskell//haskell:haskell.bzl"
         ["haskell_library"]
     , Load "@ai_formation_hazel//:hazel.bzl"
-        ["hazel_paths_module", "hazel_writefile"]
+        ["hazel_paths_module", "hazel_writefile", "hazel_symlink"]
     , Rule "package" ["default_visibility" =: ["//visibility:public"]]
     , Rule "filegroup" ["name" =: "files", "srcs" =: allRuleNames]
     , Rule "hazel_paths_module"
@@ -71,15 +75,32 @@ buildRules packageFiles packages prebuilt pkg =
                 Nothing -> error $ "Missing key " ++ show k
                 Just x -> x
 
-locateModule :: [FilePath] -> PackageFiles -> ModuleName.ModuleName -> FilePath
-locateModule srcDirs fs m
+locateModule :: FilePath -> PackageFiles -> [FilePath] -> ModuleName.ModuleName
+    -> Writer [Statement] FilePath
+locateModule dest fs srcDirs m
     | f:_ <- filter (`Set.member` fs)
-                      $ map (\d -> d </> ModuleName.toFilePath m <.> ".hs")
+                      $ map (\d -> normalise $ d </> ModuleName.toFilePath m <.> "hs")
                           srcDirs
-          = f
+          = do
+              let out = dest </> ModuleName.toFilePath m <.> "hs"
+              tell [Rule "hazel_symlink"
+                    [ "name" =: ruleName
+                    , "src" =: f
+                    , "out" =: out
+                    ]
+                 ]
+              return out
     | otherwise = error $ "Couldn't locate module " ++ display m
                             ++ " in source directories " ++ show srcDirs
                             ++ ": " ++ show fs
+  where
+    ruleName = "gen-" ++ dest ++ "-" ++ display m
+
+locateModules :: FilePath -> PackageFiles -> P.BuildInfo -> [ModuleName.ModuleName]
+    -> ([FilePath], [Statement])
+locateModules dest files bi modules =
+    runWriter . mapM (locateModule dest files (prepDirs $ P.hsSourceDirs bi))
+              $ modules
 
 renderLibrary :: PackageFiles -> PackageList -> P.PackageDescription -> P.Library -> [Statement]
 renderLibrary packageFiles prebuilt pkg lib
@@ -91,9 +112,7 @@ renderLibrary packageFiles prebuilt pkg lib
     | otherwise =
     [ Rule "haskell_library"
         [ "name" =: "lib-" ++ display (P.packageName pkg)
-        , "srcs" =: map (locateModule (prepDirs $ P.hsSourceDirs bi) packageFiles)
-                        $ filter (/= pathsMod)
-                        $ P.exposedModules lib ++ P.otherModules bi
+        , "srcs" =: srcs
         , "hidden_modules" =: map display $ filter (/= pathsMod) $ P.otherModules bi
         , "deps" =: ":cbits-lib" : ":cbits-extra" : haskellDeps
                     ++ if pathsMod `elem` (P.exposedModules lib ++ P.otherModules bi)
@@ -101,7 +120,7 @@ renderLibrary packageFiles prebuilt pkg lib
                           else []
         , "prebuilt_dependencies" =: map display . filter (`Map.member` prebuilt)
                                       $ allDeps
-        , "src_strip_prefix" =: pre
+        , "src_strip_prefix" =: srcsDir
         , "compiler_flags" =: map ("-X" ++)
                     (display (fromMaybe Haskell98 $ P.defaultLanguage bi)
                         : map display (P.defaultExtensions bi ++ P.oldExtensions bi))
@@ -138,7 +157,7 @@ renderLibrary packageFiles prebuilt pkg lib
                       . Set.toList . Set.fromList
                       $ P.extraSrcFiles pkg)
         ]
-    ]
+    ] ++ srcRules
   where
     pathsMod = pathsModule (P.packageName pkg)
     bi = P.libBuildInfo lib
@@ -148,8 +167,11 @@ renderLibrary packageFiles prebuilt pkg lib
                       . filter (`Map.notMember` prebuilt)
                       $ allDeps
     -- TODO: this will fail if there's more than one...
-    pre = head $ prepDirs $ P.hsSourceDirs bi
     headerPre = head $ prepDirs $ P.includeDirs bi
+    srcsDir = ".hazel-lib"
+    (srcs, srcRules) = locateModules srcsDir packageFiles bi
+                          $ filter (/= pathsMod)
+                          $ P.exposedModules lib ++ P.otherModules bi
 
 filterOptions :: [String] -> [String]
 filterOptions = filter (`notElem` badOptions)

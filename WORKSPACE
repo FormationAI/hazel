@@ -16,12 +16,16 @@ nixpkgs_git_repository(
 
 # Custom branch that supports macOS.
 # TODO: merge that upstream.
-RULES_HASKELL_SHA = "25d80938801f5238d3b7bd611e3d34e222788aee"
-http_archive(
+#RULES_HASKELL_SHA = "25d80938801f5238d3b7bd611e3d34e222788aee"
+#http_archive(
+#    name = "io_tweag_rules_haskell",
+#    urls = ["https://github.com/FormationAI/rules_haskell/archive/"
+#            + RULES_HASKELL_SHA + ".tar.gz"],
+#    strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
+#)
+local_repository(
     name = "io_tweag_rules_haskell",
-    urls = ["https://github.com/FormationAI/rules_haskell/archive/"
-            + RULES_HASKELL_SHA + ".tar.gz"],
-    strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
+    path = "/Users/judah.jacobson/repos/rules_haskell",
 )
 
 
