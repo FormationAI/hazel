@@ -178,6 +178,7 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
   # module_map will contain a dictionary from module names ("Foo.Bar")
   # to the preprocessed source file ("src/Foo/Bar.hs").
   module_map = {}
+  boot_module_map = {}
 
   srcs_dir = "gen-srcs/"
 
@@ -205,8 +206,20 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
         hazel_symlink(
             name = name + "-" + m,
             src = f,
-            out = module_map[m]
+            out = module_map[m],
         )
+    for f,m,out in (_glob_modules(d, ".hs-boot", ".hs-boot")
+                     + _glob_modules(d, ".lhs-boot", ".lhs-boot")):
+      boot_module_map[m] = srcs_dir + out
+      hazel_symlink(
+          name = name + "-boot-" + m,
+          src = f,
+          out = boot_module_map[m],
+      )
+
+
+  print("BOOT", boot_module_map)
+
 
 
   # Collect the source files for each module in this Cabal component.
@@ -231,7 +244,11 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
       elif m in module_map:
         srcs[condition] += [module_map[m]]
         # Get ".hs-boot" and ".lhs-boot" files.
-        boot_srcs += native.glob([module_map[m] + "-boot"])
+        if m in boot_module_map:
+          print("BOOT!!!", m, boot_module_map[m])
+          srcs[condition] += [boot_module_map[m]]
+        else:
+          print("NOBOOT", name, m)
       else:
         fail("Missing module %s for %s" % (m, name) + str(module_map))
 
@@ -308,9 +325,6 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
       textual_hdrs = list(headers),
       deps = ["@ghc//:threaded-rts"] + cc_deps,
   )
-
-  if boot_srcs:
-    ghcopts += ["-i" + native.package_name() + "/" + d for d in build_info.hsSourceDirs]
 
   return {
       "srcs": srcs,
