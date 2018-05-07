@@ -31,12 +31,16 @@ def _impl_path_module_gen(ctx):
   base_dir = ctx.label.package + (
       ("/" + ctx.attr.data_dir) if ctx.attr.data_dir else "")
 
+  print("WORKSPACE", ctx.workspace_name, ctx.label.workspace_root)
   ctx.template_action(
       template=ctx.file._template,
       output=paths_file,
       substitutions={
           "%{module}": ctx.attr.module,
-          "%{base_dir}": paths.join(ctx.label.workspace_root, base_dir),
+          "%{base_dir}": paths.join(
+              # TODO: be more robust
+              # https://github.com/bazelbuild/bazel/wiki/Updating-the-runfiles-tree-structure
+              "..", paths.relativize(ctx.label.workspace_root, "external"), base_dir),
           "%{version}": str(ctx.attr.version),
       },
   )

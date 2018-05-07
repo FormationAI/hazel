@@ -15,12 +15,15 @@ nixpkgs_git_repository(
 )
 
 RULES_HASKELL_SHA = "80a00419ba379cf4d4528d98bc28a216b25dd66a"
-http_archive(
+#http_archive(
+local_repository(
     name = "io_tweag_rules_haskell",
-    urls = ["https://github.com/tweag/rules_haskell/archive/"
-            + RULES_HASKELL_SHA + ".tar.gz"],
-    strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
+    path = "../rules_haskell",
 )
+#    urls = ["https://github.com/tweag/rules_haskell/archive/"
+#            + RULES_HASKELL_SHA + ".tar.gz"],
+#    strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
+#)
 
 load("@io_tweag_rules_haskell//haskell:repositories.bzl", "haskell_repositories")
 haskell_repositories()

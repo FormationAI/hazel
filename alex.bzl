@@ -34,5 +34,5 @@ def genalex(src, out):
       srcs=[src],
       outs=[out],
       tools=["@haskell_alex//:alex_bin"],
-      cmd="@haskell_alex//:alex_bin -g -o $(OUTS) $(SRCS)",
+      cmd="$(location @haskell_alex//:alex_bin) -g -o $(OUTS) $(SRCS)",
   )

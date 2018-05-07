@@ -7,11 +7,14 @@ module %{module} (
 
 import Data.Version (Version, makeVersion)
 import Prelude
-import System.FilePath ((</>))
+import System.FilePath ((</>), takeDirectory)
+import System.Environment (getExecutablePath)
 
 -- TODO: automatically locate root directory
 getDataDir :: IO FilePath
-getDataDir = return "%{base_dir}"
+getDataDir = do
+    exePath <- getExecutablePath
+    return $ takeDirectory exePath </> "%{base_dir}"
 
 getDataFileName :: FilePath -> IO FilePath
 getDataFileName name = do

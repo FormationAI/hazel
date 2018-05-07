@@ -30,22 +30,42 @@ _conditions_default = "//conditions:default"
 # Cabal macro generation target name ends with this.
 _macros_suffix = "-macros"
 
-# Template files that we should install manually for Happy
-_HAPPY_TEMPLATE_FILES = [
-    "GLR_Base",
-    "HappyTemplate-arrays-coerce-debug",
-    "GLR_Lib",
-    "HappyTemplate-arrays-debug",
-    "GLR_Lib-ghc",
-    "HappyTemplate-arrays-ghc",
-    "GLR_Lib-ghc-debug",
-    "HappyTemplate-arrays-ghc-debug",
-    "HappyTemplate",
-    "HappyTemplate-coerce",
-    "HappyTemplate-arrays",
-    "HappyTemplate-ghc",
-    "HappyTemplate-arrays-coerce",
-]
+# Template files that we should install manually for Happy and Alex
+# TODO: figure out a better bootstrapping method
+_MANUAL_DATA_FILES = {
+    "happy": [
+      "GLR_Base",
+      "HappyTemplate-arrays-coerce-debug",
+      "GLR_Lib",
+      "HappyTemplate-arrays-debug",
+      "GLR_Lib-ghc",
+      "HappyTemplate-arrays-ghc",
+      "GLR_Lib-ghc-debug",
+      "HappyTemplate-arrays-ghc-debug",
+      "HappyTemplate",
+      "HappyTemplate-coerce",
+      "HappyTemplate-arrays",
+      "HappyTemplate-ghc",
+      "HappyTemplate-arrays-coerce",
+    ],
+    "alex": [
+      "AlexTemplate",
+      "AlexTemplate-debug",
+      "AlexTemplate-ghc",
+      "AlexTemplate-ghc-debug",
+      "AlexTemplate-ghc-nopred",
+      "AlexWrapper-basic",
+      "AlexWrapper-basic-bytestring",
+      "AlexWrapper-gscan",
+      "AlexWrapper-monad",
+      "AlexWrapper-monad-bytestring",
+      "AlexWrapper-monadUserState",
+      "AlexWrapper-monadUserState-bytestring",
+      "AlexWrapper-posn",
+      "AlexWrapper-posn-bytestring",
+      "AlexWrapper-strict-bytestring",
+    ],
+}
 
 # The _cabal_haskell_macros rule generates a file containing Cabal
 # MIN_VERSION_* macros of all of the specified dependencies, as well as some
@@ -301,13 +321,14 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
   }
 
 def _collect_data_files(description):
-  if description.package.pkgName == "happy":
+  name = description.package.pkgName
+  if name in _MANUAL_DATA_FILES:
     files = []
-    for f in _HAPPY_TEMPLATE_FILES:
+    for f in _MANUAL_DATA_FILES[name]:
       out = paths.join(description.dataDir, f)
       hazel_symlink(
-          name = "happy-template-" + f,
-          src = "@ai_formation_hazel//templates/happy:" + f,
+          name = name + "-template-" + f,
+          src = "@ai_formation_hazel//templates/" + name + ":" + f,
           out = out)
       files += [out]
     return files
@@ -317,16 +338,12 @@ def _collect_data_files(description):
 def cabal_haskell_package(description, prebuilt_dependencies, packages):
   name = description.package.pkgName
 
-  native.filegroup(
-      name = "data-files",
-      srcs = _collect_data_files(description),
-  )
   cabal_paths(
       name = _paths_module(description),
       package = name.replace("-","_"),
       version = [int(v) for v in description.package.pkgVersion.split(".")],
       data_dir = description.dataDir,
-      data = [":data-files"],
+      data = _collect_data_files(description),
   )
 
   lib = description.library
