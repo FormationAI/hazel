@@ -1,2 +1,9 @@
 # List of source files for the "hazel" binary.
-hazel_binary_source_files = ["Main.hs", "Build.hs", "Skylark.hs", "Flatten.hs"]
+cabal2bazel_srcs = [
+    "cabal2bazel.hs",
+    "Description.hs",
+    "Flatten.hs",
+    "Skylark.hs",
+]
+
+generate_cabal_macros_srcs = ["generate-cabal-macros.hs"]

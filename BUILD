@@ -5,7 +5,7 @@ load("@io_tweag_rules_haskell//haskell:haskell.bzl",
 exports_files([
     "hazel.bzl",
     "BUILD.ghc",
-    "paths-template.hs",
+    "paths.template",
 ])
 
 haskell_toolchain(
