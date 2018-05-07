@@ -30,6 +30,23 @@ _conditions_default = "//conditions:default"
 # Cabal macro generation target name ends with this.
 _macros_suffix = "-macros"
 
+# Template files that we should install manually for Happy
+_HAPPY_TEMPLATE_FILES = [
+    "GLR_Base",
+    "HappyTemplate-arrays-coerce-debug",
+    "GLR_Lib",
+    "HappyTemplate-arrays-debug",
+    "GLR_Lib-ghc",
+    "HappyTemplate-arrays-ghc",
+    "GLR_Lib-ghc-debug",
+    "HappyTemplate-arrays-ghc-debug",
+    "HappyTemplate",
+    "HappyTemplate-coerce",
+    "HappyTemplate-arrays",
+    "HappyTemplate-ghc",
+    "HappyTemplate-arrays-coerce",
+]
+
 # The _cabal_haskell_macros rule generates a file containing Cabal
 # MIN_VERSION_* macros of all of the specified dependencies, as well as some
 # other Cabal macros.
@@ -281,23 +298,36 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
       "prebuilt_dependencies": prebuilt_deps,
       "compiler_flags": ghcopts + extra_ghcopts,
       "src_strip_prefix": srcs_dir,
-      #"extra_src_files": # [":" + name + _macros_suffix] + 
-      #                collections.uniq(
-      #    boot_srcs + install_includes + native.glob(desc.extraSrcFiles)),
   }
+
+def _collect_data_files(description):
+  if description.package.pkgName == "happy":
+    files = []
+    for f in _HAPPY_TEMPLATE_FILES:
+      out = paths.join(description.dataDir, f)
+      hazel_symlink(
+          name = "happy-template-" + f,
+          src = "@ai_formation_hazel//templates/happy:" + f,
+          out = out)
+      files += [out]
+    return files
+  else:
+    return native.glob([paths.join(description.dataDir, d) for d in description.dataFiles])
 
 def cabal_haskell_package(description, prebuilt_dependencies, packages):
   name = description.package.pkgName
 
-  print("DATA", description.dataFiles, description.dataDir)
+  native.filegroup(
+      name = "data-files",
+      srcs = _collect_data_files(description),
+  )
   cabal_paths(
       name = _paths_module(description),
       package = name.replace("-","_"),
       version = [int(v) for v in description.package.pkgVersion.split(".")],
       data_dir = description.dataDir,
-      data = native.glob([paths.join(description.dataDir, d) for d in description.dataFiles]),
+      data = [":data-files"],
   )
-
 
   lib = description.library
   if lib and lib.libBuildInfo.buildable:
