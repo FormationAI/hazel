@@ -9,8 +9,9 @@ import Data.Version (Version, makeVersion)
 import Prelude
 import System.FilePath ((</>))
 
+-- TODO: automatically locate root directory
 getDataDir :: IO FilePath
-getDataDir = error "unimplemented"
+getDataDir = return "%{base_dir}"
 
 getDataFileName :: FilePath -> IO FilePath
 getDataFileName name = do

@@ -17,9 +17,13 @@
 To see all of the generated rules, run:
 bazel query --output=build @haskell_{package}//:all
 """
-load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_library")
-load("//:cabal_paths.bzl", "cabal_paths")
 load("@bazel_skylib//:lib.bzl", "paths")
+load("@io_tweag_rules_haskell//haskell:haskell.bzl",
+     "haskell_library",
+     "haskell_binary")
+load("//:alex.bzl", "genalex")
+load("//:cabal_paths.bzl", "cabal_paths")
+load("//:happy.bzl", "genhappy")
 
 _conditions_default = "//conditions:default"
 
@@ -86,7 +90,7 @@ hazel_symlink = rule(
     },
     outputs={"out": "%{out}"})
 
-def _glob_modules(src_dir, extension):
+def _glob_modules(src_dir, extension, out_extension):
   """List Haskell files under the given directory with this extension.
 
   Args:
@@ -101,7 +105,7 @@ def _glob_modules(src_dir, extension):
   outputs = []
   for f in native.glob([paths.normalize(paths.join(src_dir, "**", "*" + extension))]):
     m,_ = paths.split_extension(paths.relativize(f, src_dir))
-    outputs += [(f, m.replace("/", "."), m + ".hs")]
+    outputs += [(f, m.replace("/", "."), m + out_extension)]
   return outputs
 
 def _conditions_dict(d):
@@ -138,33 +142,34 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
   # to the preprocessed source file ("src/Foo/Bar.hs").
   module_map = {}
 
-  srcs_dir = "gen-srcs"
+  srcs_dir = "gen-srcs/"
 
   for d in _fix_source_dirs(build_info.hsSourceDirs) + [generated_srcs_dir]:
-  #  for f,m,out in _glob_modules(base, ".x"):
-  #    module_map[m] = out
-  #    genalex(
-  #        src = f,
-  #        out = out,
-  #    )
-  #  for f,m,out in _glob_modules(base, ".y") + _glob_modules(base, ".ly"):
-  #    module_map[m] = out
-  #    genhappy(
-  #        src = f,
-  #        out = out,
-  #    )
+    for f,m,out in _glob_modules(d, ".x", ".hs"):
+      module_map[m] = srcs_dir + out
+      genalex(
+          src = f,
+          out = module_map[m],
+      )
+    for f,m,out in _glob_modules(d, ".y", ".hs") + _glob_modules(d, ".ly", ".hs"):
+      module_map[m] = srcs_dir + out
+      genhappy(
+          src = f,
+          out = module_map[m],
+      )
     # Raw source files.  Include them last, to override duplicates (e.g. if a
     # package contains both a Happy Foo.y file and the corresponding generated
     # Foo.hs).
-    for f,m,_ in _glob_modules(d, ".hs") + _glob_modules(d, ".lhs") + _glob_modules(d, ".hsc"):
-      out = srcs_dir + "/" + paths.relativize(f, d)
-      hazel_symlink(
-          name = name + "-" + m,
-          src = f,
-          out = out
-      )
-
-      module_map[m] = out
+    for f,m,out in (_glob_modules(d, ".hs", ".hs")
+                     + _glob_modules(d, ".lhs", ".lhs")
+                     + _glob_modules(d, ".hsc", ".hsc")):
+      if m not in module_map:
+        module_map[m] = srcs_dir + out
+        hazel_symlink(
+            name = name + "-" + m,
+            src = f,
+            out = module_map[m]
+        )
 
 
   # Collect the source files for each module in this Cabal component.
@@ -284,6 +289,7 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
 def cabal_haskell_package(description, prebuilt_dependencies, packages):
   name = description.package.pkgName
 
+  print("DATA", description.dataFiles, description.dataDir)
   cabal_paths(
       name = _paths_module(description),
       package = name.replace("-","_"),
@@ -316,3 +322,43 @@ def cabal_haskell_package(description, prebuilt_dependencies, packages):
           visibility = ["//visibility:public"],
           **lib_attrs
       )
+
+  for exe in description.executables:
+    if not exe.buildInfo.buildable:
+      continue
+    exe_name = exe.exeName
+        # Avoid a name clash with the library.  For stability, make this logic
+    # independent of whether the package actually contains a library.
+    if exe_name == name:
+      exe_name = name + "_bin"
+    paths_mod = _paths_module(description)
+    attrs = _get_build_attrs(exe_name, exe.buildInfo, description,
+                             "dist/build/%s/%s-tmp" % (name, name),
+                             # Some packages (e.g. happy) don't specify the
+                             # Paths_ module explicitly.
+                             [paths_mod] if paths_mod not in exe.buildInfo.otherModules
+                                        else [],
+                             prebuilt_dependencies,
+                             packages)
+    srcs = attrs.pop("srcs")
+    deps = attrs.pop("deps")
+
+    [full_module_path] = native.glob(
+        [paths.join(d, exe.modulePath) for d in exe.buildInfo.hsSourceDirs])
+    full_module_out = paths.join(attrs["src_strip_prefix"], full_module_path)
+    for xs in srcs.values():
+      if full_module_out not in xs:
+        hazel_symlink(
+            name = exe_name + "-" + exe.modulePath,
+            src = full_module_path,
+            out = full_module_out)
+        xs.append(full_module_out)
+
+    haskell_binary(
+        name = exe_name,
+        srcs = select(srcs),
+        main_file = full_module_out,
+        deps = select(deps),
+        visibility = ["//visibility:public"],
+        **attrs
+    )
