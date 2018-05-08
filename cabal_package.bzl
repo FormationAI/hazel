@@ -180,7 +180,7 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
   module_map = {}
   boot_module_map = {}
 
-  srcs_dir = "gen-srcs/"
+  srcs_dir = "gen-srcs-" + name + "/"
 
   for d in _fix_source_dirs(build_info.hsSourceDirs) + [generated_srcs_dir]:
     for f,m,out in _glob_modules(d, ".x", ".hs"):
@@ -218,10 +218,6 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
       )
 
 
-  print("BOOT", boot_module_map)
-
-
-
   # Collect the source files for each module in this Cabal component.
   # srcs is a mapping from "select()" conditions (e.g. //third_party/haskell/ghc:ghc-8.0.2) to a list of source files.
   # Turn "boot_srcs" and others to dicts if there is a use case.
@@ -245,10 +241,7 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
         srcs[condition] += [module_map[m]]
         # Get ".hs-boot" and ".lhs-boot" files.
         if m in boot_module_map:
-          print("BOOT!!!", m, boot_module_map[m])
           srcs[condition] += [boot_module_map[m]]
-        else:
-          print("NOBOOT", name, m)
       else:
         fail("Missing module %s for %s" % (m, name) + str(module_map))
 
@@ -271,8 +264,7 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
   # Collect the dependencies.
   prebuilt_deps = []
   dep_versions = {}
-  explicit_deps_idx = len(deps[_conditions_default])
-  for condition, ps in _conditions_dict(build_info.targetBuildDepends).items():
+  for condition, ps in _conditions_dict(depset(build_info.targetBuildDepends).to_list()).items():
     if condition not in deps:
       deps[condition] = []
     for p in ps:
@@ -281,7 +273,7 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
         prebuilt_deps += [p.name]
       elif p.name == desc.package.pkgName:
         # Allow executables to depend on the library in the same package.
-        deps[condition] += [":" + p.name]
+        deps[condition] += [":" + p.name + "-lib"]
       else:
         deps[condition] += ["@haskell_{}//:{}-lib".format(p.name, p.name)]
         dep_versions[p.name] = packages[p.name]
@@ -405,14 +397,18 @@ def cabal_haskell_package(description, prebuilt_dependencies, packages):
     deps = attrs.pop("deps")
 
     [full_module_path] = native.glob(
-        [paths.join(d, exe.modulePath) for d in exe.buildInfo.hsSourceDirs])
+        [paths.normalize(paths.join(d, exe.modulePath)) for d in _fix_source_dirs(exe.buildInfo.hsSourceDirs)])
     full_module_out = paths.join(attrs["src_strip_prefix"], full_module_path)
+    existing = native.existing_rules()
+    if not [existing[k] for k in existing if "out" in existing[k]
+            and existing[k]["out"] == full_module_out]:
+      hazel_symlink(
+          name = exe_name + "-" + exe.modulePath,
+          src = full_module_path,
+          out = full_module_out,
+      )
     for xs in srcs.values():
       if full_module_out not in xs:
-        hazel_symlink(
-            name = exe_name + "-" + exe.modulePath,
-            src = full_module_path,
-            out = full_module_out)
         xs.append(full_module_out)
 
     haskell_binary(
