@@ -14,10 +14,10 @@ nixpkgs_git_repository(
     revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
 )
 
-RULES_HASKELL_SHA = "80a00419ba379cf4d4528d98bc28a216b25dd66a"
+RULES_HASKELL_SHA = "82e61a86a0c7a180e047380064e193ee4aec37de"
 http_archive(
     name = "io_tweag_rules_haskell",
-    urls = ["https://github.com/tweag/rules_haskell/archive/"
+    urls = ["https://github.com/FormationAI/rules_haskell/archive/"
             + RULES_HASKELL_SHA + ".tar.gz"],
     strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
 )
