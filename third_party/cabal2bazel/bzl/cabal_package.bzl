@@ -23,6 +23,7 @@ load("@io_tweag_rules_haskell//haskell:haskell.bzl",
      "haskell_binary")
 load(":bzl/alex.bzl", "genalex")
 load(":bzl/cabal_paths.bzl", "cabal_paths")
+load(":bzl/c2hs.bzl", "c2hs")
 load(":bzl/happy.bzl", "genhappy")
 
 _conditions_default = "//conditions:default"
@@ -195,6 +196,18 @@ def _get_build_attrs(name, build_info, desc, generated_srcs_dir, extra_modules,
           src = f,
           out = module_map[m],
       )
+    for f,m,out in _glob_modules(d, ".chs", ".hs"):
+      module_file = srcs_dir + out
+      c2hs_rule_name = name + "-c2hs-" + m
+      symlink_rule_name = name + m
+      module_map[m] = ":" + symlink_rule_name
+      c2hs(
+          name = c2hs_rule_name,
+          src = f)
+      hazel_symlink(
+          name = symlink_rule_name,
+          src = ":" + c2hs_rule_name,
+          out = module_file)
     # Raw source files.  Include them last, to override duplicates (e.g. if a
     # package contains both a Happy Foo.y file and the corresponding generated
     # Foo.hs).

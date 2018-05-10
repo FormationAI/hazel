@@ -1,6 +1,6 @@
 Hazel uses some code originally hosted at
 [google/cabal2bazel](https://github.com/google/cabal2bazel).
-The current version of that code was taken from [this commit](https://github.com/google/cabal2bazel/commit/c208bf179c8e820b0733a4472a5825c4f86e8e60).
+The current version of that code was taken from [this commit](https://github.com/google/cabal2bazel/commit/771c522e0aee170b0ed488ad1bf198a5fc667ac5).
 
 Some of that code is used nearly unchanged; other parts (in particular,
 `cabal_package.bzl` are heavily modified.  Here is a (nonexhaustive) list of
