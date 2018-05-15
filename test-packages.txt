@@ -1,4 +1,6 @@
 aeson
-language-c
+language_c
 lens
 network
+zlib
+text_metrics
