@@ -67,6 +67,7 @@ _cabal_haskell_macros = rule(
             default=Label("@hazel_base_repository//:generate-cabal-macros")
         ),
     },
+    output_to_genfiles = True,
     outputs={"out": "%{name}.h"},
 )
 
