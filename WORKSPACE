@@ -14,7 +14,7 @@ nixpkgs_git_repository(
     revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
 )
 
-RULES_HASKELL_SHA = "fb6b7c4383d8de7092adab3a6e9ba0d4bcc2c190"
+RULES_HASKELL_SHA = "e1eba61f145b5203c748fc53e77e0862e2fc2554"
 http_archive(
     name = "io_tweag_rules_haskell",
     urls = ["https://github.com/tweag/rules_haskell/archive/"
