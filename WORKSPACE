@@ -32,6 +32,24 @@ nixpkgs_package(
     build_file = "@ai_formation_hazel//:BUILD.ghc",
 )
 
+nixpkgs_package(
+    name = "taglib",
+    repository = "@nixpkgs",
+    attribute_path = "taglib",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+
+filegroup (
+  name = "lib",
+  srcs = glob([
+    "lib/*.so",
+    "lib/*.so.*",
+    "lib/*.dylib",
+  ]),
+)
+""",
+)
+
 register_toolchains("@ghc//:ghc")
 
 load("//:hazel.bzl", "hazel_repositories",
@@ -57,4 +75,7 @@ hazel_repositories(
     packages=packages,
     prebuilt_dependencies=prebuilt_dependencies,
     exclude_packages = ["zlib", "text-metrics"],
+    extra_libs = {
+      "tag_c": "@taglib//:lib",
+    },
 )
