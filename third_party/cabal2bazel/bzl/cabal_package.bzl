@@ -279,11 +279,13 @@ def cabal_haskell_package(description, prebuilt_dependencies):
                                    prebuilt_dependencies)
       srcs = lib_attrs.pop("srcs")
       deps = lib_attrs.pop("deps")
+      compiler_flags = lib_attrs.pop("compiler_flags")
       haskell_library(
           name = name,
           srcs = select(srcs),
           version = description.package.pkgVersion,
           deps = select(deps),
+          compiler_flags = compiler_flags,
           visibility = ["//visibility:public"],
           **lib_attrs
       )
@@ -306,6 +308,7 @@ def cabal_haskell_package(description, prebuilt_dependencies):
                              prebuilt_dependencies)
     srcs = attrs.pop("srcs")
     deps = attrs.pop("deps")
+    compiler_flags = lib_attrs.pop("compiler_flags")
 
     [full_module_path] = native.glob(
         [paths.normalize(paths.join(d, exe.modulePath)) for d in _fix_source_dirs(exe.buildInfo.hsSourceDirs)])
@@ -327,6 +330,7 @@ def cabal_haskell_package(description, prebuilt_dependencies):
         srcs = select(srcs),
         main_file = full_module_out,
         deps = select(deps),
+        compiler_flags = compiler_flags,
         visibility = ["//visibility:public"],
         **attrs
     )
