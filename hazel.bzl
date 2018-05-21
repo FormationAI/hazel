@@ -47,6 +47,18 @@ _all_hazel_packages = repository_rule(
         "files": attr.label_list(mandatory=True),
     })
 
+def _fixup_package_name(package_name):
+  """Fixup package name by replacing dashes with underscores to get a valid
+  workspace name from it.
+
+  Args:
+    package_name: string: Package name.
+
+  Returns:
+    string: fixed package name.
+  """
+  return package_name.replace("-", "_")
+
 def hazel_repositories(prebuilt_dependencies, packages, exclude_packages=[]):
   """Generates external dependencies for a set of Haskell packages.
 
@@ -84,7 +96,7 @@ def hazel_repositories(prebuilt_dependencies, packages, exclude_packages=[]):
   )
   for p in pkgs:
     _cabal_haskell_repository(
-        name = "haskell_" + p.replace("-", "_"),
+        name = "haskell_" + _fixup_package_name(p),
         package_name = p,
         package_version = pkgs[p].version,
         sha256 = pkgs[p].sha256 if hasattr(pkgs[p], "sha256") else None,
@@ -97,7 +109,7 @@ def hazel_repositories(prebuilt_dependencies, packages, exclude_packages=[]):
 
 def hazel_library(name):
   """Returns the label of the haskell_library rule for the given package."""
-  return "@haskell_{}//:{}".format(name.replace("-", "_"), name)
+  return "@haskell_{}//:{}".format(_fixup_package_name(name), name)
 
 def hazel_custom_package_hackage(
     package_name,
@@ -115,7 +127,7 @@ def hazel_custom_package_hackage(
     package_id,
     package_id,
   )
-  fixed_package_name = package_name.replace("-", "_")
+  fixed_package_name = _fixup_package_name(package_name)
   native.new_http_archive(
     name = "haskell_{0}".format(fixed_package_name),
     build_file = "third_party/haskell/BUILD.{0}".format(fixed_package_name),
@@ -144,7 +156,7 @@ def hazel_custom_package_github(
     github_repo,
     repo_sha,
   )
-  fixed_package_name = package_name.replace("-", "_")
+  fixed_package_name = _fixup_package_name(package_name)
   native.new_http_archive(
     name = "haskell_{0}".format(fixed_package_name),
     build_file = "third_party/haskell/BUILD.{0}".format(fixed_package_name),
