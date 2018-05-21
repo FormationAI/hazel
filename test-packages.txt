@@ -4,3 +4,4 @@ lens
 network
 zlib
 text_metrics
+fuzzyset
