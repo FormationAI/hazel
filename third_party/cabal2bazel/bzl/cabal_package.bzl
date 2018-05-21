@@ -21,7 +21,6 @@ load("@bazel_skylib//:lib.bzl", "paths")
 load("@io_tweag_rules_haskell//haskell:haskell.bzl",
      "haskell_library",
      "haskell_binary",
-     "haskell_cc_import",
 )
 load(":bzl/alex.bzl", "genalex")
 load(":bzl/cabal_paths.bzl", "cabal_paths")
@@ -284,11 +283,7 @@ def cabal_haskell_package(description, prebuilt_dependencies, extra_libs):
       deps = lib_attrs.pop("deps")
       extra_libs_targets = []
       for elib in lib.libBuildInfo.extraLibs:
-        haskell_cc_import(
-          name = elib,
-          shared_library = extra_libs[elib],
-        )
-        extra_libs_targets.append(":" + elib)
+        extra_libs_targets.append(extra_libs[elib])
 
       haskell_library(
           name = name,

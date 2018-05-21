@@ -39,13 +39,20 @@ nixpkgs_package(
     build_file_content = """
 package(default_visibility = ["//visibility:public"])
 
+load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_cc_import")
+
 filegroup (
-  name = "lib",
+  name = "lib_so",
   srcs = glob([
     "lib/*.so",
     "lib/*.so.*",
     "lib/*.dylib",
   ]),
+)
+
+haskell_cc_import(
+  name = "lib",
+  shared_library = ":lib_so",
 )
 """,
 )
