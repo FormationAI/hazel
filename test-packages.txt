@@ -1,7 +1,8 @@
 aeson
+http_client
 language_c
 lens
 network
-zlib
 text_metrics
 fuzzyset
+zlib
