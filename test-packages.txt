@@ -1,4 +1,5 @@
 aeson
+htaglib
 http_client
 language_c
 lens
