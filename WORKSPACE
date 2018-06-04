@@ -14,7 +14,7 @@ nixpkgs_git_repository(
     revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
 )
 
-RULES_HASKELL_SHA = "a7ed28171ff9e4dfad23c4669eead8c170bc8e0c"
+RULES_HASKELL_SHA = "7dba3375a7b6f595f92defa8807cd292c608036c"
 http_archive(
     name = "io_tweag_rules_haskell",
     urls = ["https://github.com/tweag/rules_haskell/archive/"
@@ -145,12 +145,33 @@ hazel_custom_package_github(
   repo_sha = "34db9267bb4f9dbdee45623944900062e7995d09",
 )
 
+hazel_custom_package_github(
+  package_name = "vault",
+  github_user = "mrkkrp",
+  github_repo = "vault",
+  repo_sha = "753325a36e56e2f714c1f91eb953abbf2303ab79",
+)
+
+hazel_custom_package_github(
+  package_name = "wai-app-static",
+  github_user = "mrkkrp",
+  github_repo = "wai",
+  strip_prefix = "wai-app-static",
+  repo_sha = "c59ed7521d144a02a254ca6e230c46973ef9764f",
+)
+
 load("//:packages.bzl", "packages", "prebuilt_dependencies")
 
 hazel_repositories(
     packages=packages,
     prebuilt_dependencies=prebuilt_dependencies,
-    exclude_packages = ["zlib", "text-metrics", "conduit"],
+    exclude_packages = [
+      "conduit",
+      "text-metrics",
+      "vault",
+      "wai-app-static",
+      "zlib",
+    ],
     extra_libs = {
       "tag_c": "@taglib//:lib",
       "pq": "@postgresql//:lib",
