@@ -154,10 +154,10 @@ hazel_custom_package_github(
 
 hazel_custom_package_github(
   package_name = "wai-app-static",
-  github_user = "mrkkrp",
+  github_user = "FormationAI",
   github_repo = "wai",
   strip_prefix = "wai-app-static",
-  repo_sha = "c59ed7521d144a02a254ca6e230c46973ef9764f",
+  repo_sha = "aaa0dca56231c060372004cda46d719ec6cc3ec5",
 )
 
 load("//:packages.bzl", "packages", "prebuilt_dependencies")
