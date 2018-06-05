@@ -130,6 +130,11 @@ hazel_custom_package_hackage(
   version = "0.6.2",
 )
 
+hazel_custom_package_hackage(
+  package_name = "vault",
+  version = "0.3.1.1",
+)
+
 hazel_custom_package_github(
   package_name = "text-metrics",
   github_user = "mrkkrp",
@@ -143,13 +148,6 @@ hazel_custom_package_github(
   github_repo = "conduit",
   strip_prefix = "conduit",
   repo_sha = "34db9267bb4f9dbdee45623944900062e7995d09",
-)
-
-hazel_custom_package_github(
-  package_name = "vault",
-  github_user = "mrkkrp",
-  github_repo = "vault",
-  repo_sha = "753325a36e56e2f714c1f91eb953abbf2303ab79",
 )
 
 hazel_custom_package_github(
