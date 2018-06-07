@@ -1,12 +1,21 @@
 workspace(name = "ai_formation_hazel")
 
-http_archive(
+local_repository(
     name = "io_tweag_rules_nixpkgs",
-    strip_prefix = "rules_nixpkgs-cd2ed701127ebf7f8f21d37feb1d678e4fdf85e5",
-    urls = ["https://github.com/tweag/rules_nixpkgs/archive/cd2ed70.tar.gz"],
+    path = "/home/mark/projects/tweag/rules_nixpkgs",
 )
 
-load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_git_repository", "nixpkgs_package")
+# http_archive(
+#     name = "io_tweag_rules_nixpkgs",
+#     strip_prefix = "rules_nixpkgs-cd2ed701127ebf7f8f21d37feb1d678e4fdf85e5",
+#     urls = ["https://github.com/tweag/rules_nixpkgs/archive/cd2ed70.tar.gz"],
+# )
+
+load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl",
+     "nixpkgs_git_repository",
+     "nixpkgs_package",
+     "cc_configure_custom",
+)
 
 nixpkgs_git_repository(
     name = "nixpkgs",
@@ -14,13 +23,18 @@ nixpkgs_git_repository(
     revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
 )
 
-RULES_HASKELL_SHA = "7dba3375a7b6f595f92defa8807cd292c608036c"
-http_archive(
+local_repository(
     name = "io_tweag_rules_haskell",
-    urls = ["https://github.com/tweag/rules_haskell/archive/"
-            + RULES_HASKELL_SHA + ".tar.gz"],
-    strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
+    path = "/home/mark/projects/tweag/rules_haskell",
 )
+
+# RULES_HASKELL_SHA = "7dba3375a7b6f595f92defa8807cd292c608036c"
+# http_archive(
+#     name = "io_tweag_rules_haskell",
+#     urls = ["https://github.com/tweag/rules_haskell/archive/"
+#             + RULES_HASKELL_SHA + ".tar.gz"],
+#     strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
+# )
 
 load("@io_tweag_rules_haskell//haskell:repositories.bzl", "haskell_repositories")
 haskell_repositories()
@@ -184,3 +198,32 @@ hazel_repositories(
       "sndfile": "/external/libsndfile.dev/include",
     },
 )
+
+nixpkgs_package(
+    name = "gcc",
+    repository = "@nixpkgs",
+    attribute_path = "gcc-unwrapped",
+)
+
+nixpkgs_package(
+    name = "binutils",
+    repository = "@nixpkgs",
+    attribute_path = "binutils"
+)
+
+# nixpkgs_package(
+# )
+
+# nixpkgs_package(
+#     name = ""
+# )
+
+cc_configure_custom(
+    name = "local_config_cc",
+    # ar = "@binutils//:bin/ar",
+    gcc = "@gcc//:bin/gcc",
+    ld = "@binutils//:bin/ld",
+)
+
+bind(name = "cc_toolchain", actual = "@local_config_cc//:toolchain")
+# register_toolchains("@local_config_cc//:toolchain") # :all doesn't work
