@@ -18,7 +18,7 @@ nixpkgs_git_repository(
     revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
 )
 
-RULES_HASKELL_SHA = "1d3daac33f90b0e2fec8114fd4599782494471d0"
+RULES_HASKELL_SHA = "ab0378edb3004091f2d136168b83101b708ce92e"
 http_archive(
     name = "io_tweag_rules_haskell",
     urls = ["https://github.com/tweag/rules_haskell/archive/"
@@ -164,11 +164,11 @@ hazel_custom_package_github(
   repo_sha = "aaa0dca56231c060372004cda46d719ec6cc3ec5",
 )
 
-load("//:packages.bzl", "packages", "prebuilt_dependencies")
+load("//:packages.bzl", "packages", "core_packages")
 
 hazel_repositories(
-    packages=packages,
-    prebuilt_dependencies=prebuilt_dependencies,
+    packages = packages,
+    core_packages = core_packages,
     exclude_packages = [
       "conduit",
       "ghc-paths",
