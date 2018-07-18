@@ -12,7 +12,7 @@ jobs:
           command: |
             apk --no-progress update
             apk --no-progress add bash ca-certificates
-            REVISION=696c6bed4e8e2d9fd9b956dea7e5d49531e9d13f
+            REVISION=8d5f06cbeedcfb4a88c111754baf2d7e315e74de
             nix-env -f https://github.com/NixOS/nixpkgs/archive/$REVISION.tar.gz \
               -iA bazel binutils python git
       - run:

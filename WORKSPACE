@@ -15,7 +15,7 @@ load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_git_repository", "
 nixpkgs_git_repository(
     name = "nixpkgs",
     # A revision of 17.09 that contains ghc-8.2.2:
-    revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
+    revision = "696c6bed4e8e2d9fd9b956dea7e5d49531e9d13f",
 )
 
 RULES_HASKELL_SHA = "ab0378edb3004091f2d136168b83101b708ce92e"
