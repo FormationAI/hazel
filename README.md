@@ -35,33 +35,35 @@ as described in their
 [`README`](https://github.com/tweag/rules_nixpkgs/blob/master/README.md):
 
 ```
+RULES_NIXPKGS_SHA = "cd2ed701127ebf7f8f21d37feb1d678e4fdf85e5"
 http_archive(
     name = "io_tweag_rules_nixpkgs",
-    strip_prefix = "rules_nixpkgs-cd2ed701127ebf7f8f21d37feb1d678e4fdf85e5",
-    urls = ["https://github.com/tweag/rules_nixpkgs/archive/cd2ed70.tar.gz"],
+    strip_prefix = "rules_nixpkgs-" + RULES_NIXPKGS_SHA,
+    urls = ["https://github.com/tweag/rules_nixpkgs/archive/" + RULES_NIXPKGS_SHA + ".tar.gz"],
 )
-RULES_HASKELL_SHA = "f6f75f4b551202bff0a90e026cb572c181fac0d8"
+
+RULES_HASKELL_SHA = "67f2f87691f93a8a674283a1e1ab2ce46daf0f99"
 http_archive(
     name = "io_tweag_rules_haskell",
-    urls = ["https://github.com/tweag/rules_haskell/archive/"
-            + RULES_HASKELL_SHA + ".tar.gz"],
+    urls = ["https://github.com/tweag/rules_haskell/archive/" + RULES_HASKELL_SHA + ".tar.gz"],
     strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
 )
+
 # Replace with a more recent commit, as appropriate
-HAZEL_SHA=dca41ff6d9ce7a00e4af91ebe621f0c939e7e465
+HAZEL_SHA = "f2d6128811aae75f927d062348dc9686072fe9ce"
 http_archive(
     name = "ai_formation_hazel",
-    strip_prefix = "hazel-dca41ff6d9ce7a00e4af91ebe621f0c939e7e465",
-    urls = ["https://github.com/FormationAI/hazel/archive/{}.tar.gz".format(
-              HAZEL_COMMIT)],
+    strip_prefix = "hazel-" + HAZEL_SHA,
+    urls = ["https://github.com/FormationAI/hazel/archive/" + HAZEL_SHA + ".tar.gz"],
 )
 
 load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_git_repository", "nixpkgs_package")
 
+NIXPKGS_REVISION_SHA = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca"
 nixpkgs_git_repository(
     name = "nixpkgs",
     # A revision of 17.09 that contains ghc-8.2.2:
-    revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
+    revision = NIXPKGS_REVISION_SHA,
 )
 
 nixpkgs_package(
@@ -70,6 +72,33 @@ nixpkgs_package(
     attribute_path = "haskell.packages.ghc822.ghc",
     # NOTE: this uses the ghc bindist template provided by Hazel
     build_file = "@ai_formation_hazel//:BUILD.ghc",
+)
+
+nixpkgs_package(
+    name = "c2hs",
+    repository = "@nixpkgs",
+    attribute_path = "haskell.packages.ghc822.c2hs",
+)
+
+nixpkgs_package(
+    name = "taglib",
+    repository = "@nixpkgs",
+    attribute_path = "taglib",
+    # Inline the definition of a nonexistent build file
+    build_file_content =
+"""
+package(default_visibility = ["//visibility:public"])
+
+load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_cc_import")
+
+filegroup (
+  name = "lib",
+  srcs = glob([
+    "lib/libtag_c.so",
+    "lib/libtag_c.dylib",
+  ]),
+)
+""",
 )
 
 load("@io_tweag_rules_haskell//haskell:repositories.bzl", "haskell_repositories")
@@ -86,7 +115,8 @@ load("//:packages.bzl", "prebuilt_dependencies", "packages")
 
 hazel_repositories(
     prebuilt_dependencies=prebuilt_dependencies,
-    packages=packages)
+    packages=packages
+)
 ```
 
 ## Using Hazel in build rules
