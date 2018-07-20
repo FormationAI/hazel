@@ -1,5 +1,6 @@
 -- | Datatypes for constructing and rendering BUILD file contents.
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 module Skylark
     ( Statements
@@ -10,6 +11,8 @@ module Skylark
     , renderStatements
     , renderExpr
     ) where
+
+import Prelude hiding ((<>))
 
 import Text.PrettyPrint
     ( Doc

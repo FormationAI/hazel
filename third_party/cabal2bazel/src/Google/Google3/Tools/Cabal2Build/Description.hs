@@ -187,7 +187,10 @@ instance Exprable RepoType where
     expr e = stringE $ show e
 
 instance Exprable BuildType where
+#if MIN_VERSION_Cabal(2,2,0)
+#else
     expr (UnknownBuildType s) = stringE s
+#endif
     expr e = stringE $ show e
 
 instance Exprable RepoKind where
