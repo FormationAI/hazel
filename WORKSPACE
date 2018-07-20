@@ -4,25 +4,26 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl",
      "http_archive",
 )
 
+RULES_NIXPKGS_SHA = "896c2d96a70a408c545cc491974068c36f507009"
 http_archive(
     name = "io_tweag_rules_nixpkgs",
-    strip_prefix = "rules_nixpkgs-cd2ed701127ebf7f8f21d37feb1d678e4fdf85e5",
-    urls = ["https://github.com/tweag/rules_nixpkgs/archive/cd2ed70.tar.gz"],
+    strip_prefix = "rules_nixpkgs-" + RULES_NIXPKGS_SHA,
+    urls = ["https://github.com/tweag/rules_nixpkgs/archive/" + RULES_NIXPKGS_SHA + ".tar.gz"],
 )
 
 load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_git_repository", "nixpkgs_package")
 
+NIXPKGS_REVISION = "56fad146a12a6f934d1d5ef875eb729be1b19129"
 nixpkgs_git_repository(
     name = "nixpkgs",
-    # A revision of 17.09 that contains ghc-8.2.2:
-    revision = "c33c5239f62b4855b14dc5b01dfa3e2a885cf9ca",
+    # A revision of 18.03 that contains ghc-8.4.3:
+    revision = NIXPKGS_REVISION,
 )
 
 RULES_HASKELL_SHA = "3e68a0f3420f7589b1afa6afd3b9e37741978edc"
 http_archive(
     name = "io_tweag_rules_haskell",
-    urls = ["https://github.com/tweag/rules_haskell/archive/"
-            + RULES_HASKELL_SHA + ".tar.gz"],
+    urls = ["https://github.com/tweag/rules_haskell/archive/" + RULES_HASKELL_SHA + ".tar.gz"],
     strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
 )
 
@@ -32,14 +33,14 @@ haskell_repositories()
 nixpkgs_package(
     name = "ghc",
     repository = "@nixpkgs",
-    attribute_path = "haskell.packages.ghc822.ghc",
+    attribute_path = "haskell.packages.ghc843.ghc",
     build_file = "@ai_formation_hazel//:BUILD.ghc",
 )
 
 nixpkgs_package(
   name = "c2hs",
   repository = "@nixpkgs",
-  attribute_path = "haskell.packages.ghc822.c2hs",
+  attribute_path = "haskell.packages.ghc843.c2hs",
 )
 
 nixpkgs_package(
