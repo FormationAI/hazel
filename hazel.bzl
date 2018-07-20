@@ -44,8 +44,8 @@ def _core_library_repository_impl(ctx):
     "BUILD",
     executable=False,
     content="""
-load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_import_library")
-haskell_import_library(
+load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_import")
+haskell_import(
     name = "{pkg}",
     package = "{pkg}",
     visibility = ["//visibility:public"],
