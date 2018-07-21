@@ -37,11 +37,11 @@ cc_configure_custom(
 )
 
 
-RULES_HASKELL_SHA = "f724288c61ea637e53561208d021df79d003c537"
+RULES_HASKELL_SHA = "d60628c66d0ffe9ea3e9d0f60df786c54a4cfa69",
 
 http_archive(
     name = "io_tweag_rules_haskell",
-    urls = ["https://github.com/FormationAI/rules_haskell/archive/"
+    urls = ["https://github.com/tweag/rules_haskell/archive/"
             + RULES_HASKELL_SHA + ".tar.gz"],
     strip_prefix = "rules_haskell-" + RULES_HASKELL_SHA,
 )
