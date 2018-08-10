@@ -146,10 +146,10 @@ def _get_build_attrs(
       )
 
     for f,m,out in _glob_modules(d, ".chs", ".chs"):
-      r = name + "-" + m
-      s = name + "-" + m + "-symlink"
+      chs_rule = name + "-" + m
+      symlink_rule = name + "-" + m + "-symlink"
       hazel_symlink(
-          name = s,
+          name = symlink_rule,
           src = f,
           out = srcs_dir + out,
       )
@@ -159,13 +159,13 @@ def _get_build_attrs(
       # modules.  However, that's not easy the way the code is currently
       # structured.
       c2hs_library(
-          name = r,
-          srcs = [s],
+          name = chs_rule,
+          srcs = [symlink_rule],
           deps = [_haskell_cc_import_name(elib) for elib in build_info.extraLibs]
               + [clib_name],
       )
 
-      module_map[m] = r
+      module_map[m] = chs_rule
     # Raw source files.  Include them last, to override duplicates (e.g. if a
     # package contains both a Happy Foo.y file and the corresponding generated
     # Foo.hs).
