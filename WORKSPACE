@@ -32,7 +32,7 @@ nixpkgs_package(
 
 cc_configure_custom(
     name = "local_config_cc",
-    gcc = "@compiler//:bin/gcc",
+    gcc = "@compiler//:bin/cc",
     ld = "@binutils//:bin/ld",
 )
 

@@ -7,7 +7,7 @@ let
     phases = [ "installPhase" ];
     installPhase = ''
         mkdir -p $out/bin
-        cat > $out/bin/gcc << EOL
+        cat > $out/bin/cc << EOL
         #!/bin/sh
         ${pkgs.clang}/bin/clang \
             -Wno-unused-command-line-argument \
@@ -20,7 +20,7 @@ let
             \''$@
         EOL
 
-        chmod +x $out/bin/gcc
+        chmod +x $out/bin/cc
         '';
   };
 in if pkgs.stdenv.isDarwin then overrideClang else pkgs.gcc
