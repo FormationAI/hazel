@@ -19,9 +19,9 @@ nixpkgs_git_repository(
 
 load("//:cc_configure_custom.bzl", "cc_configure_custom")
 nixpkgs_package(
-    name = "gcc",
+    name = "compiler",
     repository = "@nixpkgs",
-    attribute_path = "gcc",
+    nix_file = "//:compiler.nix",
 )
 
 nixpkgs_package(
@@ -32,12 +32,12 @@ nixpkgs_package(
 
 cc_configure_custom(
     name = "local_config_cc",
-    gcc = "@gcc//:bin/gcc",
+    gcc = "@compiler//:bin/gcc",
     ld = "@binutils//:bin/ld",
 )
 
 
-RULES_HASKELL_SHA = "f724288c61ea637e53561208d021df79d003c537"
+RULES_HASKELL_SHA = "4964f8309a9f28b4a13340d22198e54926d3fa7e"
 
 http_archive(
     name = "io_tweag_rules_haskell",
