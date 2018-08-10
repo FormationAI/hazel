@@ -146,47 +146,36 @@ def _get_build_attrs(
       )
 
     for f,m,out in _glob_modules(d, ".chs", ".chs"):
-      r = name + "-" + m
-      s = name + "-" + m + "-symlink"
-      hazel_symlink(
-          name = s,
-          src = f,
-          out = srcs_dir + out,
-      )
+      module_map[m] = name + "-" + m
       # TODO: this will not work if one .chs file imports another.
       # To mimic Cabal's behavior we should assume the module names are
       # topologically ordered; i.e., make each one depend on all previous
       # modules.  However, that's not easy the way the code is currently
       # structured.
       c2hs_library(
-          name = r,
-          srcs = [s],
+          name = module_map[m],
+          srcs = [f],
           deps = [_haskell_cc_import_name(elib) for elib in build_info.extraLibs]
               + [clib_name],
       )
-
-      module_map[m] = r
     # Raw source files.  Include them last, to override duplicates (e.g. if a
     # package contains both a Happy Foo.y file and the corresponding generated
     # Foo.hs).
-    for f,m,out in (_glob_modules(d, ".hs", ".hs")
-                     + _glob_modules(d, ".lhs", ".lhs")
-                     + _glob_modules(d, ".hsc", ".hsc")):
-      if m not in module_map:
+    for f,m,out in _glob_modules(d, ".hsc", ".hsc"):
         module_map[m] = srcs_dir + out
         hazel_symlink(
             name = name + "-" + m,
             src = f,
             out = module_map[m],
         )
+
+    for f,m,out in (_glob_modules(d, ".hs", ".hs")
+                    + _glob_modules(d, ".lhs", ".lhs")):
+      if m not in module_map:
+        module_map[m] = f
     for f,m,out in (_glob_modules(d, ".hs-boot", ".hs-boot")
                      + _glob_modules(d, ".lhs-boot", ".lhs-boot")):
-      boot_module_map[m] = srcs_dir + out
-      hazel_symlink(
-          name = name + "-boot-" + m,
-          src = f,
-          out = boot_module_map[m],
-      )
+      boot_module_map[m] = f
 
   # Collect the source files for each module in this Cabal component.
   # srcs is a mapping from "select()" conditions (e.g. //third_party/haskell/ghc:ghc-8.0.2) to a list of source files.
@@ -303,7 +292,6 @@ def _get_build_attrs(
       "srcs": srcs,
       "deps": deps,
       "compiler_flags": ghcopts + extra_ghcopts,
-      "src_strip_prefix": srcs_dir,
   }
 
 def _collect_data_files(description):
@@ -426,18 +414,9 @@ def cabal_haskell_package(
 
     [full_module_path] = native.glob(
         [paths.normalize(paths.join(d, exe.modulePath)) for d in _fix_source_dirs(exe.buildInfo.hsSourceDirs)])
-    full_module_out = paths.join(attrs["src_strip_prefix"], full_module_path)
-    existing = native.existing_rules()
-    if not [existing[k] for k in existing if "out" in existing[k]
-            and existing[k]["out"] == full_module_out]:
-      hazel_symlink(
-          name = exe_name + "-" + exe.modulePath,
-          src = full_module_path,
-          out = full_module_out,
-      )
     for xs in srcs.values():
-      if full_module_out not in xs:
-        xs.append(full_module_out)
+      if full_module_path not in xs:
+        xs.append(full_module_path)
 
     haskell_binary(
         name = exe_name,
