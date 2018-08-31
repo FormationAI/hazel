@@ -37,7 +37,7 @@ cc_configure_custom(
 )
 
 
-RULES_HASKELL_SHA = "f724288c61ea637e53561208d021df79d003c537"
+RULES_HASKELL_SHA = "1d87b5014e723cefa4e54f4771b2d179998e0fb4"
 
 http_archive(
     name = "io_tweag_rules_haskell",
