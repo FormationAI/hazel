@@ -12,6 +12,7 @@ haskell_test(
         hazel_library("base"),
         hazel_library("vector"),
     ],
+    linkstatic = False,
 )
 
 haskell_test(
