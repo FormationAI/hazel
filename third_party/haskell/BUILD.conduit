@@ -29,4 +29,5 @@ haskell_library(
     "@haskell_transformers_compat//:transformers-compat",
     "@haskell_vector//:vector",
   ],
+  version = "1.2.13.1",
 )
