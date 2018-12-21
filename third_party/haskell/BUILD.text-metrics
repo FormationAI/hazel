@@ -16,3 +16,8 @@ haskell_library(
   ],
   version = "0.3.0",
 )
+
+cc_import(
+    name = "text-metrics-cbits",
+    visibility = ["//visibility:public"],
+)
