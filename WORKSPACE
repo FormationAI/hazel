@@ -87,15 +87,22 @@ filegroup (
 )
 
 nixpkgs_package(
-    name = "libsndfile.out",
+    name = "libsndfile",
+    attribute_path = "libsndfile.out",
     repository = "@nixpkgs",
     build_file_content = """
 package(default_visibility = ["//visibility:public"])
 
+cc_library(
+  name = "libsndfile",
+  srcs = [":lib"],
+  deps = ["@libsndfile.dev"],
+)
+
 filegroup(
   name = "lib",
   srcs = glob([
-    "lib/libsndfile.so",
+    "lib/libsndfile.so*",
     "lib/libsndfile.dylib",
   ]),
 )
@@ -107,6 +114,12 @@ nixpkgs_package(
     repository = "@nixpkgs",
     build_file_content = """
 package(default_visibility = ["//visibility:public"])
+
+cc_library(
+  name = "libsndfile.dev",
+  hdrs = [":headers"],
+  strip_include_prefix = "include",
+)
 
 filegroup(
   name = "headers",
@@ -226,15 +239,13 @@ hazel_repositories(
     ],
     extra_cdeps = {
       "pq": "@postgresql",
+      "sndfile": "@libsndfile",
       "tag_c": "@taglib",
     },
     extra_libs = {
-      "sndfile": "@libsndfile.out//:lib",
     },
     extra_libs_hdrs = {
-      "sndfile": "@libsndfile.dev//:headers",
     },
     extra_libs_strip_include_prefix = {
-      "sndfile": "/external/libsndfile.dev/include",
     },
 )
