@@ -71,10 +71,15 @@ package(default_visibility = ["//visibility:public"])
 
 load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_cc_import")
 
+cc_library(
+  name = "taglib",
+  srcs = [":lib"],
+)
+
 filegroup (
   name = "lib",
   srcs = glob([
-    "lib/libtag_c.so",
+    "lib/libtag_c.so*",
     "lib/libtag_c.dylib",
   ]),
 )
@@ -221,9 +226,9 @@ hazel_repositories(
     ],
     extra_cdeps = {
       "pq": "@postgresql",
+      "tag_c": "@taglib",
     },
     extra_libs = {
-      "tag_c": "@taglib//:lib",
       "sndfile": "@libsndfile.out//:lib",
     },
     extra_libs_hdrs = {
