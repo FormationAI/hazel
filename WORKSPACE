@@ -237,7 +237,7 @@ hazel_repositories(
       "wai-app-static",
       "zlib",
     ],
-    extra_cdeps = {
+    extra_libs = {
       "pq": "@postgresql",
       "sndfile": "@libsndfile",
       "tag_c": "@taglib",
