@@ -118,10 +118,17 @@ nixpkgs_package(
   build_file_content = """
 package(default_visibility = ["//visibility:public"])
 
+cc_library(
+  name = "postgresql",
+  srcs = [":lib"],
+  hdrs = [":headers"],
+  strip_include_prefix = "include",
+)
+
 filegroup (
   name = "lib",
   srcs = glob([
-    "lib/libecpg.so",
+    "lib/libecpg.so*",
     "lib/libecpg.dylib",
   ]),
 )
@@ -212,17 +219,17 @@ hazel_repositories(
       "wai-app-static",
       "zlib",
     ],
+    extra_cdeps = {
+      "pq": "@postgresql",
+    },
     extra_libs = {
       "tag_c": "@taglib//:lib",
-      "pq": "@postgresql//:lib",
       "sndfile": "@libsndfile.out//:lib",
     },
     extra_libs_hdrs = {
-      "pq": "@postgresql//:headers",
       "sndfile": "@libsndfile.dev//:headers",
     },
     extra_libs_strip_include_prefix = {
-      "pq": "/external/postgresql/include",
       "sndfile": "/external/libsndfile.dev/include",
     },
 )
