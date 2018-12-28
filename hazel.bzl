@@ -109,6 +109,7 @@ def hazel_repositories(
   core_packages,
   packages,
   extra_flags={},
+  extra_cdeps={},
   extra_libs={},
   extra_libs_hdrs={},
   extra_libs_strip_include_prefix={},
@@ -136,6 +137,8 @@ def hazel_repositories(
       - sha256: A hex-encoded SHA of the Cabal distribution (*.tar.gz).
     extra_flags: A dict mapping package names to cabal flags.
     exclude_packages: names of packages to exclude.
+    extra_cdeps: A dictionary that maps from name of extra libraries to Bazel
+      targets that provide the shared library and headers as a cc_library.
     extra_libs: A dictionary that maps from name of extra libraries to Bazel
       targets that provide the shared library.
     extra_libs_hdrs: Similar to extra_libs, but provides header files.
@@ -153,6 +156,7 @@ def hazel_repositories(
   hazel_base_repository(
       name = hazel_base_repo_name,
       ghc_workspaces = ghc_workspaces,
+      extra_cdeps = extra_cdeps,
       extra_libs = extra_libs,
       extra_libs_hdrs = extra_libs_hdrs,
       extra_libs_strip_include_prefix = extra_libs_strip_include_prefix,
