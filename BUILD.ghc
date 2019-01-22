@@ -2,6 +2,7 @@
 package(default_visibility = [ "//visibility:public" ])
 
 load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_toolchain")
+load("@io_tweag_rules_haskell//haskell:c2hs.bzl", "c2hs_toolchain")
 
 filegroup(
     name = "bin",
@@ -38,9 +39,13 @@ cc_library(
   strip_include_prefix = glob(["lib/ghc-*/unix-*/include"], exclude_directories=0)[0],
 )
 
+c2hs_toolchain(
+  name ="c2hs",
+  c2hs = "@c2hs//:bin",
+)
+
 haskell_toolchain(
     name = "ghc",
-    c2hs = "@c2hs//:bin",
     version = "8.2.2",
     tools = ":bin",
     locale_archive = select({
