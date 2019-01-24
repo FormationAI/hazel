@@ -14,10 +14,11 @@ load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_git_repository", "
 
 nixpkgs_git_repository(
     name = "nixpkgs",
-    revision = "ee80654b5267b07ba10d62d143f211e0be81549e",
+    revision = "c37ae1dcf669b5b262350ddbb75a40be166e7e88",
 )
 
 load("//:cc_configure_custom.bzl", "cc_configure_custom")
+
 nixpkgs_package(
     name = "compiler",
     repository = "@nixpkgs",
