@@ -39,12 +39,3 @@ jobs:
       - run:
           name: Build and test
           command: bazel test --test_output=errors --jobs=2 //...
-
-      - run:
-          name: Test some third-party packages
-          command: |
-              bazel build --jobs=2 \
-                  $(for p in $(cat test-packages.txt)
-                    do
-                       echo @haskell_$p//...
-                    done)

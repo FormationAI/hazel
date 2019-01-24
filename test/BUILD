@@ -24,6 +24,33 @@ haskell_test(
     ],
 )
 
+haskell_test(
+    name = "third-party-test",
+    srcs = ["third-party-test.hs"],
+    deps = [
+        hazel_library("aeson"),
+        hazel_library("aeson-extra"),
+        hazel_library("cassava"),
+        hazel_library("conduit"),
+        hazel_library("entropy"),
+        hazel_library("fuzzyset"),
+        hazel_library("hsndfile"),
+        hazel_library("htaglib"),
+        hazel_library("http-client"),
+        hazel_library("language-c"),
+        hazel_library("lens"),
+        hazel_library("network"),
+        hazel_library("postgresql-libpq"),
+        hazel_library("pretty-show"),
+        hazel_library("text-metrics"),
+        hazel_library("unix-compat"),
+        hazel_library("unix-time"),
+        hazel_library("vector"),
+        hazel_library("wai-app-static"),
+        hazel_library("zlib"),
+    ],
+)
+
 haskell_library(
     name = "DoctestExample",
     srcs = ["DoctestExample.hs"],
