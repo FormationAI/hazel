@@ -14,10 +14,11 @@ load("@io_tweag_rules_nixpkgs//nixpkgs:nixpkgs.bzl", "nixpkgs_git_repository", "
 
 nixpkgs_git_repository(
     name = "nixpkgs",
-    revision = "ee80654b5267b07ba10d62d143f211e0be81549e",
+    revision = "c37ae1dcf669b5b262350ddbb75a40be166e7e88",
 )
 
 load("//:cc_configure_custom.bzl", "cc_configure_custom")
+
 nixpkgs_package(
     name = "compiler",
     repository = "@nixpkgs",
@@ -36,7 +37,7 @@ cc_configure_custom(
     ld = "@binutils//:bin/ld",
 )
 
-RULES_HASKELL_SHA = "8bc2b2c847c54f3d9f6bd5000f8deefa1cf4c995"
+RULES_HASKELL_SHA = "8221d03cd38cee9cd956dd8f3e48ea0fa4440770"
 
 http_archive(
     name = "io_tweag_rules_haskell",
@@ -151,6 +152,7 @@ filegroup(
 
 register_toolchains(
     "@ghc//:ghc",
+    "//:c2hs",
     "//:doctest",
 )
 
@@ -194,7 +196,7 @@ hazel_custom_package_github(
   github_user = "FormationAI",
   github_repo = "wai",
   strip_prefix = "wai-app-static",
-  repo_sha = "aaa0dca56231c060372004cda46d719ec6cc3ec5",
+  repo_sha = "9217512fae1d6c2317447b257f478005efb55ef7",
 )
 
 load("//:packages.bzl", "packages", "core_packages")

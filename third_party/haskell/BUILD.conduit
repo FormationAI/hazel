@@ -3,7 +3,7 @@ package(default_visibility = ["//visibility:public"])
 load("@io_tweag_rules_haskell//haskell:haskell.bzl",
   "haskell_library",
 )
-load("//tools:mangling.bzl", "hazel_library")
+load("@ai_formation_hazel//:hazel.bzl", "hazel_library")
 
 haskell_library(
   name = "conduit",
