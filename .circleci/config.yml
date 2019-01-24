@@ -29,7 +29,7 @@ jobs:
           command: |
             sudo mkdir -p /nix
             sudo chown -R circleci /nix
-            NIX_RELEASE=1.11.14
+            NIX_RELEASE=2.1.3
             ARCH=x86_64
             wget https://nixos.org/releases/nix/nix-${NIX_RELEASE}/nix-${NIX_RELEASE}-${ARCH}-linux.tar.bz2
             tar -xjvf nix-${NIX_RELEASE}-${ARCH}-linux.tar.bz2
