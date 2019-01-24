@@ -18,7 +18,7 @@ jobs:
           command: |
             set -x
             export USER=circleci
-            VERSION=0.15.2
+            VERSION=0.21.0
             INSTALLER=bazel-$VERSION-installer-linux-x86_64.sh
             wget https://github.com/bazelbuild/bazel/releases/download/$VERSION/$INSTALLER
             chmod +x $INSTALLER
