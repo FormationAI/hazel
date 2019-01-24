@@ -152,6 +152,7 @@ filegroup(
 
 register_toolchains(
     "@ghc//:ghc",
+    "//:c2hs",
     "//:doctest",
 )
 
