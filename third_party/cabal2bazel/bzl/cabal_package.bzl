@@ -297,13 +297,14 @@ def _get_build_attrs(
   # them as command-line arguments; instead, it looks for them next to the
   # corresponding .hs files.
   deps = {}
-  cdeps = []
+  cdeps = {}
   paths_module = _paths_module(desc)
   extra_modules_dict = _conditions_dict(extra_modules)
   other_modules_dict = _conditions_dict(build_info.otherModules)
   for condition in depset(extra_modules_dict.keys() + other_modules_dict.keys()):
     srcs[condition] = []
     deps[condition] = []
+    cdeps[condition] = []
     for m in (extra_modules_dict.get(condition, []) +
               other_modules_dict.get(condition, [])):
       if m == paths_module:
@@ -337,10 +338,13 @@ def _get_build_attrs(
       [p.name for p in build_info.targetBuildDepends]).to_list()).items():
     if condition not in deps:
       deps[condition] = []
+    if condition not in cdeps:
+      cdeps[condition] = []
     for p in ps:
       deps[condition] += [hazel_library(p)]
+      cdeps[condition] += ["{}-cbits".format(hazel_library(p))]
       if p in _CORE_DEPENDENCY_INCLUDES:
-        cdeps += [_CORE_DEPENDENCY_INCLUDES[p]]
+        cdeps[condition] += [_CORE_DEPENDENCY_INCLUDES[p]]
         deps[condition] += [_CORE_DEPENDENCY_INCLUDES[p]]
 
   ghcopts += ["-optP" + o for o in build_info.cppOptions]
@@ -396,7 +400,8 @@ def _get_build_attrs(
                + ["-I" + i for i in elibs_includes]),
       defines = [o[2:] for o in build_info.ccOptions if o.startswith("-D")],
       textual_hdrs = list(headers),
-      deps = ["@ghc//:threaded-rts"] + cdeps + cc_deps + elibs_targets,
+      deps = ["@ghc//:threaded-rts"] + select(cdeps) + cc_deps + elibs_targets,
+      visibility = ["//visibility:public"],
   )
 
   return {
@@ -458,6 +463,10 @@ def cabal_haskell_package(
     if not lib.exposedModules:
       native.cc_library(
           name = name,
+          visibility = ["//visibility:public"],
+      )
+      native.cc_library(
+          name = name + "-cbits",
           visibility = ["//visibility:public"],
       )
     else:

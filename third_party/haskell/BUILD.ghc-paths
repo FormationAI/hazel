@@ -17,3 +17,8 @@ haskell_library(
         hazel_library("base"),
     ],
 )
+
+cc_import(
+    name = "ghc-paths-cbits",
+    visibility = ["//visibility:public"],
+)
