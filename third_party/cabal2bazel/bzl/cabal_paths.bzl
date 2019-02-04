@@ -31,19 +31,31 @@ def _impl_path_module_gen(ctx):
   base_dir = ctx.label.package + (
       ("/" + ctx.attr.data_dir) if ctx.attr.data_dir else "")
 
-  ctx.template_action(
+  # If workspace_root is not empty, we have an external repo.
+  # We need to relativize the paths.
+  if ctx.label.workspace_root != "":
+    ctx.template_action(
       template=ctx.file._template,
       output=paths_file,
       substitutions={
-          "%{module}": ctx.attr.module,
-          "%{base_dir}": paths.join(
-              # TODO: this probably won't work for packages not in external
-              # repositories.  See:
-              # https://github.com/bazelbuild/bazel/wiki/Updating-the-runfiles-tree-structure
-              "..", paths.relativize(ctx.label.workspace_root, "external"), base_dir),
-          "%{version}": str(ctx.attr.version),
+        "%{module}": ctx.attr.module,
+        "%{base_dir}": paths.join(
+          # https://github.com/bazelbuild/bazel/wiki/Updating-the-runfiles-tree-structure
+          "..", paths.relativize(ctx.label.workspace_root, "external"), base_dir),
+        "%{version}": str(ctx.attr.version),
       },
-  )
+    )
+  else: # Otherwise this is a local directory, and we can use relative paths.
+    ctx.template_action(
+      template=ctx.file._template,
+      output=paths_file,
+      substitutions={
+        "%{module}": ctx.attr.module,
+        "%{base_dir}": base_dir,
+        "%{version}": str(ctx.attr.version),
+      },
+    )
+
   return struct(files=depset([paths_file]))
 
 
