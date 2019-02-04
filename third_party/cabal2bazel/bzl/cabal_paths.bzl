@@ -93,7 +93,7 @@ def cabal_paths(name=None, package=None, data_dir='',data=[], version=[], **kwar
     data: The data files that this package depends on to run.
     version: The version number of this package (list of ints)
   """
-  module_name = "Paths_" + package
+  module_name = "Paths_" + package.replace("-", "_")
   paths_file = module_name + ".hs"
   _path_module_gen(
       name = paths_file,
