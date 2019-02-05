@@ -34,3 +34,24 @@ haskell_doctest(
     name = "doctest-test",
     deps = [":DoctestExample"],
 )
+
+load("//:third_party/cabal2bazel/bzl/cabal_paths.bzl", "cabal_paths")
+
+cabal_paths(
+    name = "foo-paths",
+    package = "foo",
+    version = [
+        1,
+        2,
+    ],
+)
+
+haskell_test(
+    name = "PathsTest",
+    srcs = ["PathsTest.hs"],
+    deps = [
+        ":foo-paths",
+        hazel_library("base"),
+        hazel_library("filepath"),
+    ],
+)
