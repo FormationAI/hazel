@@ -11,22 +11,28 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl",
 load("//tools:ghc.bzl", "get_ghc_workspace", "default_ghc_workspaces")
 load("//tools:mangling.bzl", "hazel_binary", "hazel_library", "hazel_workspace")
 
+def _mirrors(pkg):
+  return [package_url_template.format(pkg) for package_url_template in [
+    "http://hackage.fpcomplete.com/package/{}.tar.gz",
+    "http://hackage.haskell.org/package/{}.tar.gz",
+  ]]
+
 def _cabal_haskell_repository_impl(ctx):
   ghc_workspace = get_ghc_workspace(ctx.attr.ghc_workspaces, ctx)
 
   pkg = "{}-{}".format(ctx.attr.package_name, ctx.attr.package_version)
-  url = "http://hackage.fpcomplete.com/package/{}.tar.gz".format(pkg)
+  urls = _mirrors(pkg)
   # If the SHA is wrong, the error message is very unhelpful:
   # https://github.com/bazelbuild/bazel/issues/3709
   # As a workaround, we compute it manually if it's not set (and then fail
   # this rule).
   if not ctx.attr.sha256:
-    ctx.download(url=url, output="tar")
+    ctx.download(url=urls, output="tar")
     res = ctx.execute(["openssl", "sha", "-sha256", "tar"])
     fail("Missing expected attribute \"sha256\" for {}; computed {}".format(pkg, res.stdout + res.stderr))
 
   ctx.download_and_extract(
-      url=url,
+      url=urls,
       stripPrefix=ctx.attr.package_name + "-" + ctx.attr.package_version,
       sha256=ctx.attr.sha256,
       output="")
@@ -216,9 +222,7 @@ def hazel_custom_package_hackage(
       build_file and build_file_content are mutually exclusive.
   """
   package_id = package_name + "-" + version
-  url = "http://hackage.fpcomplete.com/package/{}.tar.gz".format(
-    package_id,
-  )
+  urls = _mirrors(package_id)
   if not build_file and not build_file_content:
     build_file = "//third_party/haskell:BUILD.{0}".format(package_name)
   http_archive(
@@ -227,7 +231,7 @@ def hazel_custom_package_hackage(
     build_file_content = build_file_content,
     sha256 = sha256,
     strip_prefix = package_id,
-    urls = [url],
+    urls = urls,
   )
 
 def hazel_custom_package_github(
