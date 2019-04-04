@@ -51,7 +51,7 @@ main = do
         Left err -> throw err
         Right (x :: BuildPlan) -> pure x
     shas <- flip Map.traverseWithKey (planPackages plan) $ \n p -> do
-        let hackageUrl = "https://hackage.haskell.org/package/"
+        let hackageUrl = "http://hackage.fpcomplete.com/package/"
                             ++ Cabal.display n ++ "-" ++ Cabal.display (planPackageVersion p)
                             ++ ".tar.gz"
         tar <- downloadUrl manager hackageUrl
