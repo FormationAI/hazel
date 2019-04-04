@@ -15,7 +15,7 @@ def _cabal_haskell_repository_impl(ctx):
   ghc_workspace = get_ghc_workspace(ctx.attr.ghc_workspaces, ctx)
 
   pkg = "{}-{}".format(ctx.attr.package_name, ctx.attr.package_version)
-  url = "https://hackage.haskell.org/package/{}.tar.gz".format(pkg)
+  url = "https://hackage.fpcomplete.com/package/{}.tar.gz".format(pkg)
   # If the SHA is wrong, the error message is very unhelpful:
   # https://github.com/bazelbuild/bazel/issues/3709
   # As a workaround, we compute it manually if it's not set (and then fail
@@ -216,7 +216,7 @@ def hazel_custom_package_hackage(
       build_file and build_file_content are mutually exclusive.
   """
   package_id = package_name + "-" + version
-  url = "https://hackage.haskell.org/package/{0}/{1}.tar.gz".format(
+  url = "https://hackage.fpcomplete.com/package/{0}/{1}.tar.gz".format(
     package_id,
     package_id,
   )
