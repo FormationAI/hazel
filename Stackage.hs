@@ -14,6 +14,7 @@ import qualified Crypto.Hash.SHA256 as SHA256
 import Control.Monad (forM_, unless)
 import Data.Aeson.Types
 import Data.Bifunctor
+import Data.List (intercalate)
 import Data.Yaml
 import Distribution.Package
 import Distribution.PackageDescription (FlagName, mkFlagName, unFlagName)
@@ -31,6 +32,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Base16 as Base16
 import qualified Data.ByteString.Char8 as BC
+import qualified Data.List.NonEmpty as Nel
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Distribution.Text as Cabal
@@ -46,15 +48,17 @@ main = do
             "https://raw.githubusercontent.com/fpco/lts-haskell/master/" ++ resolver ++ ".yaml"
           _ ->
             "https://raw.githubusercontent.com/fpco/stackage-nightly/master/" ++ resolver ++ ".yaml"
-    ltsYaml <- downloadUrl manager ltsUrl
+    ltsYaml <- downloadUrl manager (ltsUrl Nel.:| [])
     plan <- case decodeEither' $ L.toStrict ltsYaml of
         Left err -> throw err
         Right (x :: BuildPlan) -> pure x
     shas <- flip Map.traverseWithKey (planPackages plan) $ \n p -> do
-        let hackageUrl = "http://hackage.fpcomplete.com/package/"
-                            ++ Cabal.display n ++ "-" ++ Cabal.display (planPackageVersion p)
-                            ++ ".tar.gz"
-        tar <- downloadUrl manager hackageUrl
+        let
+          tarball = Cabal.display n ++ "-" ++ Cabal.display (planPackageVersion p) ++ ".tar.gz"
+          fpcoUrl = "http://hackage.fpcomplete.com/package/"
+          hackageUrl = "http://hackage.haskell.org/package/"
+          urls = fmap (++tarball) (fpcoUrl Nel.:| [hackageUrl])
+        tar <- downloadUrl manager urls
         putStrLn (Cabal.display n)
         return $! SHA256.hashlazy tar
     writeFile out $ show $
@@ -88,16 +92,32 @@ flagsExpr :: Flags -> Expr
 flagsExpr m = ExprDict $
   bimap (ExprString . unFlagName) ExprBool <$> Map.toList m
 
-downloadUrl :: Manager -> String -> IO L.ByteString
-downloadUrl manager url = do
-    req <- parseRequest url
-    resp <- httpLbs req manager
-    let status = responseStatus resp
-    unless (statusIsSuccessful status)
-        $ error $ "Unable to download " ++ show url
-                ++ "\nStatus: " ++ show (statusCode status)
-                ++ " " ++ BC.unpack (statusMessage status)
-    return $ responseBody resp
+downloadUrl :: Manager -> Nel.NonEmpty String -> IO L.ByteString
+downloadUrl manager urls = do
+  resp <- tryUrls urls
+  let
+    allUrls = intercalate ", " $ Nel.toList urls
+    status = responseStatus resp
+  unless (statusIsSuccessful status)
+    $ error $ "Unable to download any of " ++ allUrls
+            ++ "\n Last status: " ++ show (statusCode status)
+            ++ " " ++ BC.unpack (statusMessage status)
+  return $ responseBody resp
+  where
+    tryUrl u = do
+      req <- parseRequest u
+      httpLbs req manager
+
+    tryUrls (u Nel.:| []) = do
+      resp <- tryUrl u
+      return resp
+
+    tryUrls (u Nel.:|(u':us)) = do
+      resp <- tryUrl u
+      let status = responseStatus resp
+      if (statusIsSuccessful status)
+        then return resp
+        else tryUrls $ u' Nel.:| us
 
 --------------------------------------------------------------------------------
 -- JSON data types and instances for parsing the LTS yaml file
