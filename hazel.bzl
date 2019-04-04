@@ -11,7 +11,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl",
 
 def _cabal_haskell_repository_impl(ctx):
   pkg = "{}-{}".format(ctx.attr.package_name, ctx.attr.package_version)
-  url = "https://hackage.fpcomplete.com/package/{}.tar.gz".format(pkg)
+  url = "http://hackage.fpcomplete.com/package/{}.tar.gz".format(pkg)
   # If the SHA is wrong, the error message is very unhelpful:
   # https://github.com/bazelbuild/bazel/issues/3709
   # As a workaround, we compute it manually if it's not set (and then fail
@@ -183,7 +183,7 @@ def hazel_custom_package_hackage(
     sha256: string, SHA256 hash of archive.
   """
   package_id = package_name + "-" + version
-  url = "https://hackage.fpcomplete.com/package/{0}/{1}.tar.gz".format(
+  url = "http://hackage.fpcomplete.com/package/{0}/{1}.tar.gz".format(
     package_id,
     package_id,
   )
