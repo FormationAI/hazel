@@ -9,20 +9,26 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl",
      "http_archive",
 )
 
+def _mirrors(pkg):
+  [package_url_template.format(pkg) for package_url_template in [
+    "http://hackage.fpcomplete.com/package/{}.tar.gz",
+    "http://hackage.haskell.org/package/{}.tar.gz",
+  ]]
+
 def _cabal_haskell_repository_impl(ctx):
   pkg = "{}-{}".format(ctx.attr.package_name, ctx.attr.package_version)
-  url = "http://hackage.fpcomplete.com/package/{}.tar.gz".format(pkg)
+  urls = _mirrors(pkg)
   # If the SHA is wrong, the error message is very unhelpful:
   # https://github.com/bazelbuild/bazel/issues/3709
   # As a workaround, we compute it manually if it's not set (and then fail
   # this rule).
   if not ctx.attr.sha256:
-    ctx.download(url=url, output="tar")
+    ctx.download(url=urls, output="tar")
     res = ctx.execute(["openssl", "sha", "-sha256", "tar"])
     fail("Missing expected attribute \"sha256\" for {}; computed {}".format(pkg, res.stdout + res.stderr))
 
   ctx.download_and_extract(
-      url=url,
+      url=urls,
       stripPrefix=ctx.attr.package_name + "-" + ctx.attr.package_version,
       sha256=ctx.attr.sha256,
       output="")
@@ -183,16 +189,14 @@ def hazel_custom_package_hackage(
     sha256: string, SHA256 hash of archive.
   """
   package_id = package_name + "-" + version
-  url = "http://hackage.fpcomplete.com/package/{}.tar.gz".format(
-    package_id,
-  )
+  urls = _mirror(package_id)
   fixed_package_name = _fixup_package_name(package_name)
   http_archive(
     name = "haskell_{0}".format(fixed_package_name),
     build_file = "//third_party/haskell:BUILD.{0}".format(fixed_package_name),
     sha256 = sha256,
     strip_prefix = package_id,
-    urls = [url],
+    urls = urls,
   )
 
 def hazel_custom_package_github(
