@@ -18,6 +18,6 @@ haskell_doctest_toolchain(
 )
 
 c2hs_toolchain(
-  name ="c2hs",
+  name = "c2hs",
   c2hs = "@c2hs//:bin",
 )

@@ -71,10 +71,15 @@ package(default_visibility = ["//visibility:public"])
 
 load("@io_tweag_rules_haskell//haskell:haskell.bzl", "haskell_cc_import")
 
+cc_library(
+  name = "taglib",
+  srcs = [":lib"],
+)
+
 filegroup (
   name = "lib",
   srcs = glob([
-    "lib/libtag_c.so",
+    "lib/libtag_c.so*",
     "lib/libtag_c.dylib",
   ]),
 )
@@ -82,15 +87,22 @@ filegroup (
 )
 
 nixpkgs_package(
-    name = "libsndfile.out",
+    name = "libsndfile",
+    attribute_path = "libsndfile.out",
     repository = "@nixpkgs",
     build_file_content = """
 package(default_visibility = ["//visibility:public"])
 
+cc_library(
+  name = "libsndfile",
+  srcs = [":lib"],
+  deps = ["@libsndfile.dev"],
+)
+
 filegroup(
   name = "lib",
   srcs = glob([
-    "lib/libsndfile.so",
+    "lib/libsndfile.so*",
     "lib/libsndfile.dylib",
   ]),
 )
@@ -102,6 +114,12 @@ nixpkgs_package(
     repository = "@nixpkgs",
     build_file_content = """
 package(default_visibility = ["//visibility:public"])
+
+cc_library(
+  name = "libsndfile.dev",
+  hdrs = [":headers"],
+  strip_include_prefix = "include",
+)
 
 filegroup(
   name = "headers",
@@ -118,10 +136,17 @@ nixpkgs_package(
   build_file_content = """
 package(default_visibility = ["//visibility:public"])
 
+cc_library(
+  name = "postgresql",
+  srcs = [":lib"],
+  hdrs = [":headers"],
+  strip_include_prefix = "include",
+)
+
 filegroup (
   name = "lib",
   srcs = glob([
-    "lib/libecpg.so",
+    "lib/libecpg.so*",
     "lib/libecpg.dylib",
   ]),
 )
@@ -213,16 +238,8 @@ hazel_repositories(
       "zlib",
     ],
     extra_libs = {
-      "tag_c": "@taglib//:lib",
-      "pq": "@postgresql//:lib",
-      "sndfile": "@libsndfile.out//:lib",
-    },
-    extra_libs_hdrs = {
-      "pq": "@postgresql//:headers",
-      "sndfile": "@libsndfile.dev//:headers",
-    },
-    extra_libs_strip_include_prefix = {
-      "pq": "/external/postgresql/include",
-      "sndfile": "/external/libsndfile.dev/include",
+      "pq": "@postgresql",
+      "sndfile": "@libsndfile",
+      "tag_c": "@taglib",
     },
 )
